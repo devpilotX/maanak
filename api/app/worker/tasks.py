@@ -40,6 +40,7 @@ from ..services import imaging, jobs, storage
 from ..services.audit import AuditContext
 from ..services.audit import record as audit_record
 from ..services.canonical import json_safe
+from ..services.extraction import confusables
 from ..services.extraction import pipeline as extraction_pipeline
 from ..services.ocr import read_barcodes, read_with_best_profile, run_ocr
 
@@ -400,6 +401,12 @@ def _build_candidate(
     else:
         explanation_parts.append("Located by its format; no printed label was found beside it.")
     explanation_parts.extend(match.notes)
+
+    # Glyph ambiguity is reported rather than corrected. The reader returns a plausible
+    # character at high confidence, so nothing else in the pipeline would catch it.
+    ambiguity = confusables.ambiguity_note(match.matched_text or "")
+    if ambiguity:
+        explanation_parts.append(ambiguity)
 
     numeric: Decimal | None = None
     if match.numeric_value is not None:

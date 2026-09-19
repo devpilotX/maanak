@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 import pytest
 
+from app.services.extraction.confusables import ambiguity_note
 from app.services.imaging import (
     THRESHOLDS,
     detect_backdrop,
@@ -141,3 +142,43 @@ class TestSharpnessUnaffected:
         assert value >= 0
         if blur >= 21:
             assert value < THRESHOLDS["sharpness_blocking"]
+
+
+class TestConfusableGlyphs:
+    """The reader returned "lodised Salt" for "Iodised Salt" in all eight conditions of
+    the accuracy benchmark, at 95 per cent confidence, and no profile fixed it. The
+    ambiguity is reported to the officer rather than corrected, because a rule that
+    turned a leading lowercase l into a capital I would also break Lemon and Litre.
+    """
+
+    def test_the_real_misreading_is_flagged(self) -> None:
+        note = ambiguity_note("lodised Salt")
+        assert note is not None
+        assert "lodised" in note
+        assert "'I'" in note
+
+    def test_the_correct_reading_is_quiet(self) -> None:
+        assert ambiguity_note("Iodised Salt") is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "Lemon Pickle",
+            "Riverside Foods Private Limited",
+            "Refined Sunflower Oil",
+            "lemon pickle",
+            "salt",
+            "1 kg",
+            "RS2026A",
+            "care@example.org",
+            "",
+        ],
+    )
+    def test_no_false_positives(self, value: str) -> None:
+        assert ambiguity_note(value) is None, f"{value!r} was flagged and should not be"
+
+    def test_the_note_never_changes_the_value(self) -> None:
+        """The reading is left alone. Only an explanation is added."""
+        value = "lodised Salt"
+        ambiguity_note(value)
+        assert value == "lodised Salt"
