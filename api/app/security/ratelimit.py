@@ -46,8 +46,24 @@ PASSWORD_RESET_PER_IP = Limit("pwreset_ip", max_requests=5, window_seconds=900, 
 COMPLAINT_PER_IP = Limit("complaint_ip", max_requests=5, window_seconds=3600, fail_closed=True)
 COMPLAINT_STATUS_PER_IP = Limit("cstatus_ip", max_requests=30, window_seconds=600, fail_closed=True)
 EVIDENCE_UPLOAD_PER_USER = Limit("upload_user", max_requests=120, window_seconds=600)
-LISTING_FETCH_PER_USER = Limit("listing_user", max_requests=20, window_seconds=600)
 REPORT_VERIFY_PER_IP = Limit("verify_ip", max_requests=60, window_seconds=600)
+
+# Declared but NOT enforced. Nothing calls enforce() with either of these, so reading this
+# module should not leave the impression that they protect anything.
+#
+# LISTING_FETCH_PER_USER belongs to the e-commerce listing fetcher, which is deliberately
+# not implemented: docs/KNOWN_LIMITS.md records that configuration for it exists and no code
+# fetches a URL. The limit is here so the budget is decided before the feature is written.
+#
+# API_PER_SESSION is a general per-session ceiling that was never wired up. Measuring the
+# deployment is what found it: scripts/measure_load.py drove 3,132 requests across four
+# sessions and saw zero 429 responses. It is left unenforced rather than switched on, because
+# the same measurement puts sustained read throughput at about 122 requests per second while
+# this limit would cap a session at 10, so enabling it as written would throttle legitimate
+# workspace use by an order of magnitude. It needs a number derived from measurement before
+# it means anything. docs/THREAT_MODEL.md already states that rate limits protect specific
+# endpoints and that there is no general protection, which remains accurate.
+LISTING_FETCH_PER_USER = Limit("listing_user", max_requests=20, window_seconds=600)
 API_PER_SESSION = Limit("api_session", max_requests=600, window_seconds=60)
 
 
