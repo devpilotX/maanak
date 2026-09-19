@@ -30,7 +30,11 @@ def main() -> int:
     known = {permission.value for permission in Permission}
     usages: dict[str, list[str]] = {}
 
-    for path in sorted(Path("web").rglob("*.js")) + sorted(Path("web").rglob("*.html")):
+    # Resolved from this file rather than the working directory. Path("web") only
+    # existed when the script happened to be run from the repository root, and from
+    # anywhere else it matched nothing and reported success on zero permissions.
+    web = Path(__file__).resolve().parents[2] / "web"
+    for path in sorted(web.rglob("*.js")) + sorted(web.rglob("*.html")):
         text = path.read_text(encoding="utf-8")
         for name in CAN_RE.findall(text) + ATTR_RE.findall(text):
             usages.setdefault(name, []).append(str(path))
@@ -55,6 +59,10 @@ def main() -> int:
     print()
     print(f"permission names used by the interface: {len(usages)}")
     print(f"names that do not exist: {failures}")
+    if not usages:
+        # A check that scans nothing must not report success.
+        print(f"FAIL  no permission names found under {web}. The check scanned nothing.")
+        return 2
     return 0 if failures == 0 else 1
 
 

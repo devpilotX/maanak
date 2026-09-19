@@ -105,21 +105,23 @@ closed, so repeated runs from one container would otherwise start returning 429.
 | `tests/test_extraction_values.py` | 43 | nothing | The arithmetic a finding rests on, asserted as exact `Decimal` values |
 | `tests/test_domain_units.py` | 51 | nothing | GS1 check digits worked through by hand; permission matrix; jurisdiction isolation; state machine edges, guards and reachability; canonical hashing determinism |
 | `tests/test_presentation.py` | 24 | nothing | Every enum label reads as English rather than as a raw value; the JavaScript override table matches the Python one; counted nouns never fall back to "(s)"; the decision choices offered are exactly the ones the service accepts; no em dash survives in any source file |
-| `tests/test_imaging_quality.py` | 11 | nothing | A plain studio backdrop is not counted as glare and not counted again as bright clipping, and a genuine highlight burnt into the panel still blocks. Both directions, because a fix that silenced glare everywhere would be worse than the false positive it replaced |
-| `check_prose.py` | 41 files | nothing | No machine-writing tells across 28 pages and 13 documents: no tool leak markers, no scaffold headings, no participial tails, no copula avoidance, no em dash anywhere |
-| `audit_app.py` | 106 | full stack + Chromium | Every route in the OpenAPI document is declared; all 28 pages load and reach their data; no stringified object or undefined value reaches the screen; the inspection screen passes axe as a reviewer, with the decision form rendered |
+| `tests/test_imaging_quality.py` | 23 | nothing | A plain studio backdrop is not counted as glare and not counted again as bright clipping, and a genuine highlight burnt into the panel still blocks. Both directions, because a fix that silenced glare everywhere would be worse than the false positive it replaced. Also the confusable-glyph detector: it flags "lodised" and stays quiet on "Lemon Pickle" |
+| `measure_ocr_accuracy.py` | 80 fields | full stack | Ten declarations with known correct values, scored against the extraction output under eight conditions: as generated, scaled to 1200 and 900 wide, rotated 2 and 6 degrees, JPEG quality 55, blurred, and on a white backdrop. 72 of 80 correct. The figure is for generated labels and is not an accuracy figure for photographs |
+| `measure_ocr_real.py` | 14 photographs | full stack + network | Photographs of real Indian packs contributed to Open Food Facts, scored against each product's declared quantity. 6 of 14 yielded at least one declaration, 10 declarations in total, and net quantity was read from none of them. The quality gate refused 5 outright. The result that matters is that **no photograph produced a non-compliant finding before review**. Not a labelled benchmark, and 14 is too few to quote a percentage from |
+| `check_prose.py` | 41 files | nothing | No machine-writing tells across 28 pages and 14 documents: no tool leak markers, no scaffold headings, no participial tails, no copula avoidance, no em dash anywhere |
+| `audit_app.py` | 134 | full stack + Chromium | Every route in the OpenAPI document is declared; all 28 pages load and reach their data; no stringified object or undefined value reaches the screen; the inspection screen passes axe as a reviewer, with the decision form rendered |
 | `measure_a11y.py` | 14 pages | Chromium | Zero axe violations at WCAG 2.0, 2.1 and 2.2 level A and AA; zero targets under 24 by 24 CSS pixels, which axe has no rule for; zero sticky or fixed positioning on a public page |
 | `scan_tints.py --app` | 24 pages | Chromium | No warm-tinted surface at any of three breakpoints, across the public site and the workspace |
 | `check_links.py` | 0 broken | Chromium | Every internal link resolves and every in-page anchor has an element to land on |
 | `check_workspace_chrome.py` | 14 screens | full stack + Chromium | One header and one footer on every workspace screen, the standing note present in each, and no em dash in the rendered text |
 | `check_report_text.py` | 2 documents | full stack | The generated PDF and DOCX contain no em dash, no "(s)" plural, no stringified object and no raw enum value, checked by extracting the text a reader receives |
 | `verify_officer_flow.py` | 44 | full stack + Chromium | The whole officer workflow driven through the interface: open an inspection, have a glared photograph refused with a named reason, upload a readable one, wait for the worker, read the OCR output, confirm eleven readings, run the checks, send for reviewer decision, record the decision, issue the report, open the case |
-| `check_js_bindings.py` | 26 modules | nothing | No module uses a helper it never imported. A missing import throws only when the line runs, so one referenced in a rarely-taken branch can sit broken indefinitely |
+| `check_js_bindings.py` | 27 modules | nothing | No module uses a helper it never imported. A missing import throws only when the line runs, so one referenced in a rarely-taken branch can sit broken indefinitely |
 | `check_permission_names.py` | 25 names | nothing | Every permission the interface asks for exists. A name that does not exist is never held, so the control it guards is hidden from everyone with no error anywhere |
 | `check_error_messages.py` | 164 messages | nothing | No error an officer reads names a JSON key or a database column |
 | `check_api_reach.py` | 92 operations | API | Every endpoint is either reached from a screen or recorded, with a reason, as deliberately not reached |
 
-Total: **510 assertions** across the eight verification suites, plus **130 pytest items**
+Total: **510 assertions** across the eight verification suites, plus **142 pytest items**
 in the fast set (which includes three of the suites, since they need no services).
 
 ## Running one suite
@@ -151,12 +153,26 @@ checks per suite so a suite cannot silently shrink.
 | --- | --- |
 | `quality` | `ruff format --check`, `ruff check`, `mypy app` |
 | `unit` | Fast tests with coverage, uploaded as an artefact |
+| `static-checks` | The prose gate, `check_js_bindings.py`, `check_permission_names.py`, `check_error_messages.py` |
 | `migrations` | Upgrade to head, downgrade, upgrade again, then **fail on model drift** if an autogenerate produces any table or column change |
-| `integration` | Full stack, the live-stack suites, then the browser and accessibility suite |
+| `integration` | Full stack, the live-stack suites, the browser suite, then a seeded workspace and `audit_app.py`, `verify_officer_flow.py`, `check_api_reach.py`, `check_report_text.py`, `measure_a11y.py`, `scan_tints.py` and `check_links.py` |
 | `supply-chain` | `pip-audit --strict`, CycloneDX SBOM, gitleaks secret scan, Trivy container scan failing on HIGH or CRITICAL |
 | `release-archive` | Builds the archive and verifies it extracts complete |
 
 Nothing is marked `continue-on-error`.
+
+Until this was written, CI ran ten of the checks listed on this page and the other twelve
+only ever ran by hand. That is how `check_js_bindings.py` came to be documented as
+covering 26 modules when the tree held 27: nothing re-measured it. Two of the checks would
+also report success while reading nothing at all, because they resolved `web/` and `app/`
+relative to the working directory, so running one from the wrong folder scanned an empty
+set and exited zero. Each now resolves its own paths and fails on an empty scan.
+
+The two OCR benchmarks are deliberately not in CI. `measure_ocr_accuracy.py` takes several
+minutes of worker time per condition, and `measure_ocr_real.py` downloads photographs from
+Open Food Facts, so it needs outbound network access and its corpus changes as people
+contribute. Both are run by hand and their results recorded in
+[KNOWN_LIMITS.md](KNOWN_LIMITS.md).
 
 ## Not tested
 

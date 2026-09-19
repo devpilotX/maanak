@@ -85,6 +85,43 @@ jobs:
           name: coverage
           path: api/coverage.xml
 
+  static-checks:
+    name: prose, bindings, permissions and messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: api/requirements.lock.txt
+
+      # check_permission_names.py imports app.security.permissions to compare the names
+      # the interface uses against the real enum, so the application's dependencies have
+      # to be present. The other three are standard library only.
+      - name: Install dependencies
+        working-directory: api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock.txt
+
+      # These four read the tree and need no services. They were previously runnable but
+      # unenforced, so the README could advertise a count that no run had ever produced:
+      # check_js_bindings reported 26 modules in the documentation against 27 on disk.
+      # Each now resolves its own paths and fails rather than passing on an empty scan.
+      - name: Writing rules across pages and documents
+        run: python api/scripts/check_prose.py web docs README.md
+
+      - name: No module uses a helper it never imported
+        run: python api/scripts/check_js_bindings.py
+
+      - name: Every permission the interface names exists
+        run: python api/scripts/check_permission_names.py
+
+      - name: No error message names a schema or a column
+        run: python api/scripts/check_error_messages.py
+
   migrations:
     name: migrations against real PostgreSQL
     runs-on: ubuntu-latest
@@ -190,6 +227,60 @@ jobs:
           docker run --rm --network maanak_default \
             -v "$PWD/api:/w" -w /w -e BASE_URL=http://web:8080 maanak-browser:ci
 
+      # Everything below was runnable but unenforced. The README advertises each of these
+      # as a measured result, so CI is where the measurement has to happen.
+      - name: Seed a real workspace
+        run: |
+          # verify_browser.py leaves the workspace it bootstrapped, so start again and
+          # load the demo accounts, the rules and one complete worked example. The
+          # screens that follow assert against real rows rather than empty states.
+          docker compose run --rm --no-deps migrate python scripts/reset_data.py
+          docker compose run --rm --no-deps -e API_URL=http://api:8000 \
+            --entrypoint python api scripts/seed_demo.py
+          docker compose run --rm --no-deps -e API_URL=http://api:8000 \
+            --entrypoint python api scripts/seed_example.py
+          # api/screenshots/ is not committed, so the readable label the officer flow
+          # uploads has to be generated here.
+          docker compose run --rm --no-deps --user root -v "$PWD/api:/app" \
+            --entrypoint python api scripts/make_sample_label.py
+
+      - name: Every page and workspace screen, axe and reflow
+        run: |
+          docker run --rm --network maanak_default -v "$PWD:/repo" -v "$PWD/api:/w" -w /w \
+            -e BASE_URL=http://web:8080 -e API_URL=http://api:8000 maanak-browser:ci \
+            python scripts/audit_app.py
+
+      - name: The whole officer workflow through the interface
+        run: |
+          docker run --rm --network maanak_default -v "$PWD:/repo" -v "$PWD/api:/w" -w /w \
+            -e BASE_URL=http://web:8080 -e API_URL=http://api:8000 maanak-browser:ci \
+            python scripts/verify_officer_flow.py
+
+      - name: Every API operation is reached from a screen or explained
+        run: |
+          docker run --rm --network maanak_default -v "$PWD:/repo" -w /repo \
+            maanak-browser:ci python api/scripts/check_api_reach.py --base http://api:8000
+
+      - name: The generated PDF and DOCX read correctly
+        run: |
+          docker compose run --rm --no-deps -e API_URL=http://api:8000 \
+            --entrypoint python api scripts/check_report_text.py
+
+      - name: Target size, sticky positioning and axe across the public pages
+        run: |
+          docker run --rm --network maanak_default -v "$PWD:/repo" -v "$PWD/api:/w" -w /w \
+            -e BASE_URL=http://web:8080 maanak-browser:ci python scripts/measure_a11y.py
+
+      - name: No warm-tinted surfaces
+        run: |
+          docker run --rm --network maanak_default -v "$PWD:/repo" -v "$PWD/api:/w" -w /w \
+            -e BASE_URL=http://web:8080 maanak-browser:ci python scripts/scan_tints.py --app
+
+      - name: No broken links or unresolved anchors
+        run: |
+          docker run --rm --network maanak_default -v "$PWD:/repo" -v "$PWD/api:/w" -w /w \
+            -e BASE_URL=http://web:8080 maanak-browser:ci python scripts/check_links.py
+
       - name: Service logs on failure
         if: failure()
         run: docker compose logs --tail 200
@@ -248,7 +339,7 @@ jobs:
 
   release-archive:
     name: archive integrity
-    needs: [quality, unit, migrations, integration, supply-chain]
+    needs: [quality, unit, static-checks, migrations, integration, supply-chain]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

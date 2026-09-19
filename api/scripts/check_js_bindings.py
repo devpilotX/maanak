@@ -114,7 +114,10 @@ def bindings(source: str) -> set[str]:
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1] if len(argv) > 1 else "web/js")
+    # Default resolved from this file rather than the working directory, so the check
+    # works from anywhere. An explicit path still overrides it.
+    default = Path(__file__).resolve().parents[2] / "web" / "js"
+    root = Path(argv[1]) if len(argv) > 1 else default
     files = sorted(root.rglob("*.js"))
     if not files:
         print(f"no JavaScript under {root}")
@@ -147,6 +150,7 @@ def main(argv: list[str]) -> int:
             print(f"  ok    {path}")
 
     print()
+    print(f"modules checked: {len(files)}")
     print(f"missing bindings: {failures}")
     return 0 if failures == 0 else 1
 

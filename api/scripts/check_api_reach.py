@@ -22,7 +22,9 @@ import sys
 import urllib.request
 from pathlib import Path
 
-WEB = Path("web/js")
+# Resolved from this file rather than the working directory, so the check reads the same
+# modules wherever it is run from.
+WEB = Path(__file__).resolve().parents[2] / "web" / "js"
 
 #: Operations that are deliberately not called by the browser application, with the
 #: reason. Anything here is a decision, not an oversight.

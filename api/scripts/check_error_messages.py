@@ -65,7 +65,10 @@ def message_strings(tree: ast.AST) -> list[tuple[int, str]]:
 
 
 def main() -> int:
-    root = Path("app")
+    # Resolved from this file rather than the working directory. Path("app") only
+    # existed when the script happened to be run from api/, and from anywhere else it
+    # matched nothing and reported success on zero messages.
+    root = Path(__file__).resolve().parent.parent / "app"
     offenders = 0
     checked = 0
     for path in sorted(root.rglob("*.py")):
@@ -80,6 +83,10 @@ def main() -> int:
     print()
     print(f"error messages checked: {checked}")
     print(f"messages naming a schema or column: {offenders}")
+    if checked == 0:
+        # A check that scans nothing must not report success.
+        print(f"FAIL  no error messages found under {root}. The check scanned nothing.")
+        return 2
     return 0 if offenders == 0 else 1
 
 
