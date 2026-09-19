@@ -29,6 +29,7 @@ from ..errors import (
     AccountLockedError,
     ConflictError,
     InvalidCredentialsError,
+    MfaRequiredError,
     NotFoundError,
     PermissionDeniedError,
     SessionExpiredError,
@@ -201,6 +202,44 @@ async def sign_in(
         # Transparently upgrade a hash created under weaker parameters.
         user.password_hash = passwords.hash_password(password)
 
+    # A correct password is not a session when a second factor is enrolled. The attempt is
+    # recorded as a partial success so the trail shows the password stage was passed, and no
+    # cookie is issued until the code verifies.
+    if user.mfa_enabled and user.mfa_secret:
+        sessions.clear_failed_logins(user)
+        await sessions.record_login_attempt(
+            db,
+            email=address,
+            user_id=user.id,
+            successful=False,
+            failure_reason="mfa_required",
+            ip_address=context.ip_address,
+            user_agent=context.user_agent,
+        )
+        LOGIN_ATTEMPTS.labels(outcome="mfa_required").inc()
+        from . import mfa as mfa_service
+
+        raise MfaRequiredError(
+            "This account requires a code from its authenticator application.",
+            code="mfa_required",
+            details={"challenge": mfa_service.issue_challenge(user)},
+        )
+
+    return await complete_sign_in(db, context, user=user)
+
+
+async def complete_sign_in(
+    db: AsyncSession,
+    context: audit_service.AuditContext,
+    *,
+    user: User,
+) -> SignInResult:
+    """Open a session for an account that has passed every authentication stage.
+
+    Split out of :func:`sign_in` so the second-factor route can finish a sign-in without
+    holding the password a second time.
+    """
+    address = _normalise_email(user.email)
     sessions.clear_failed_logins(user)
     issued = await sessions.create_session(
         db, user=user, ip_address=context.ip_address, user_agent=context.user_agent

@@ -420,6 +420,103 @@ def main() -> int:
             "errors do not leak internals",
         )
 
+    # --- second factor ---------------------------------------------------------------
+    #
+    # The property that matters: a correct password alone opens nothing once a second
+    # factor is enrolled. Everything else here is in service of proving that.
+    print("second factor")
+    from app.security import totp
+
+    with httpx.Client(base_url=BASE_URL, timeout=60) as officer:
+        signed = officer.post(
+            "/api/v1/auth/sign-in", json={"email": admin_email, "password": strong_password}
+        )
+        check(signed.status_code == 200, f"signed in to enrol ({signed.status_code})")
+
+        begun = officer.post("/api/v1/auth/mfa/begin", headers=csrf_headers(officer))
+        check(begun.status_code == 200, f"enrolment begins ({begun.status_code})")
+        secret = begun.json().get("secret", "") if begun.status_code == 200 else ""
+        check(len(secret) >= 32, f"a base32 secret is issued ({len(secret)} characters)")
+        check(
+            begun.json().get("provisioning_uri", "").startswith("otpauth://totp/")
+            if begun.status_code == 200
+            else False,
+            "an otpauth URI is issued for the authenticator application",
+        )
+
+        status = officer.get("/api/v1/auth/mfa")
+        check(
+            status.status_code == 200 and status.json().get("enrolled") is False,
+            "the factor is not active until a code confirms the officer holds the secret",
+        )
+
+        refused = officer.post(
+            "/api/v1/auth/mfa/confirm", json={"code": "000000"}, headers=csrf_headers(officer)
+        )
+        check(refused.status_code >= 400, f"a wrong code cannot confirm ({refused.status_code})")
+
+        confirmed = officer.post(
+            "/api/v1/auth/mfa/confirm",
+            json={"code": totp.current_code(secret)},
+            headers=csrf_headers(officer),
+        )
+        check(confirmed.status_code == 200, f"a valid code confirms ({confirmed.status_code})")
+
+    with httpx.Client(base_url=BASE_URL, timeout=60) as second:
+        attempt = second.post(
+            "/api/v1/auth/sign-in", json={"email": admin_email, "password": strong_password}
+        )
+        check(attempt.status_code == 401, f"the password alone is refused ({attempt.status_code})")
+        body = attempt.json().get("error", {}) if attempt.status_code == 401 else {}
+        check(body.get("code") == "mfa_required", f"the refusal says why ({body.get('code')})")
+        challenge = (body.get("details") or {}).get("challenge", "")
+        check(len(challenge) > 20, "a challenge is returned to finish the sign-in with")
+        check(
+            not second.cookies.get("maanak_access"),
+            "no session cookie is set by the password step",
+        )
+
+        wrong = second.post(
+            "/api/v1/auth/mfa/verify",
+            json={"challenge": challenge, "code": "000000"},
+            headers=csrf_headers(second),
+        )
+        check(wrong.status_code >= 400, f"a wrong code cannot finish ({wrong.status_code})")
+
+        forged = second.post(
+            "/api/v1/auth/mfa/verify",
+            json={"challenge": challenge + "x", "code": totp.current_code(secret)},
+            headers=csrf_headers(second),
+        )
+        check(forged.status_code >= 400, f"a tampered challenge is refused ({forged.status_code})")
+
+        finished = second.post(
+            "/api/v1/auth/mfa/verify",
+            json={"challenge": challenge, "code": totp.current_code(secret)},
+            headers=csrf_headers(second),
+        )
+        check(
+            finished.status_code == 200,
+            f"password and code together open a session ({finished.status_code})",
+        )
+        me = second.get("/api/v1/auth/me")
+        check(me.status_code == 200, f"the session works afterwards ({me.status_code})")
+
+        removed = second.post(
+            "/api/v1/auth/mfa/remove",
+            json={"password": "not-the-password", "code": totp.current_code(secret)},
+            headers=csrf_headers(second),
+        )
+        check(
+            removed.status_code >= 400, f"a wrong password cannot remove it ({removed.status_code})"
+        )
+        removed = second.post(
+            "/api/v1/auth/mfa/remove",
+            json={"password": strong_password, "code": totp.current_code(secret)},
+            headers=csrf_headers(second),
+        )
+        check(removed.status_code == 200, f"password and code remove it ({removed.status_code})")
+
     print()
     if failures:
         print(f"{len(failures)} of {checks} checks FAILED")

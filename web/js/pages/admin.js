@@ -44,6 +44,9 @@ function renderRowActions(u) {
   if (can('user.update')) { const b = el('button', { class: 'btn btn-sm', type: 'button', text: 'Edit' }); b.addEventListener('click', () => editUser(u)); row.appendChild(b); }
   const s = el('button', { class: 'btn btn-sm', type: 'button', text: 'Sessions' }); s.addEventListener('click', () => viewSessions(u)); row.appendChild(s);
   if (can('user.reset_password')) { const p = el('button', { class: 'btn btn-sm', type: 'button', text: 'Reset password' }); p.addEventListener('click', () => resetPassword(u)); row.appendChild(p); }
+  // Clearing a second factor is the recovery path for a lost device. Same permission as a
+  // password reset, because it is the same kind of act, and it is audited by name.
+  if (can('user.reset_password')) { const m = el('button', { class: 'btn btn-sm', type: 'button', text: 'Reset second factor' }); m.addEventListener('click', () => resetSecondFactor(u)); row.appendChild(m); }
   return row;
 }
 
@@ -168,3 +171,21 @@ async function resetPassword(u) {
 }
 
 main();
+
+async function resetSecondFactor(u) {
+  const reason = await reasonDialog({
+    title: `Clear the second factor for ${u.email}`,
+    body: 'The account holder will sign in with their password alone until they enrol again. '
+      + 'This is recorded against your name.',
+    label: 'Why is this being cleared?',
+    confirmText: 'Clear the second factor',
+  });
+  if (!reason) return;
+  try {
+    await api.post(`/auth/users/${u.id}/mfa/reset`, { reason });
+    setStatus($('#page-status'), `The second factor on ${u.email} has been cleared.`, 'ok');
+    load();
+  } catch (err) {
+    setStatus($('#page-status'), err instanceof ApiError ? err.message : 'Could not clear the second factor.', 'error');
+  }
+}

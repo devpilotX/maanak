@@ -35,6 +35,53 @@
           </form>
         </section>
 
+        <section aria-labelledby="mfa-h">
+          <h2 id="mfa-h">Second factor</h2>
+          <div id="mfa-status" class="status-region" aria-live="polite"></div>
+          <p class="hint">A code from an authenticator application, in addition to your
+            password. Enrolment is in two steps: scan the code, then type what the
+            application shows, so a failed scan cannot lock you out of your own account.</p>
+          <div id="mfa-state"></div>
+
+          <form id="mfa-enrol-form" hidden novalidate>
+            <p>Scan this with an authenticator application, then enter the six digits it
+              shows.</p>
+            <img id="mfa-qr" alt="Enrolment code for an authenticator application" width="200"
+                 height="200" hidden>
+            <p class="hint">If you cannot scan it, enter this secret by hand:
+              <code id="mfa-secret"></code></p>
+            <div class="field">
+              <label for="mfa-code">Code from the application <span class="req" aria-hidden="true">*</span></label>
+              <input type="text" id="mfa-code" name="code" inputmode="numeric" autocomplete="one-time-code"
+                     pattern="[0-9]{6}" maxlength="6" required aria-required="true">
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Confirm and enable</button>
+              <button class="btn" type="button" id="mfa-cancel">Cancel</button>
+            </div>
+          </form>
+
+          <form id="mfa-remove-form" hidden novalidate>
+            <p>Removing the second factor needs your password as well as a current code, so a
+              borrowed session cannot strip it off on its own.</p>
+            <div class="field">
+              <label for="mfa-password">Password <span class="req" aria-hidden="true">*</span></label>
+              <input type="password" id="mfa-password" name="password" required aria-required="true"
+                     autocomplete="current-password">
+            </div>
+            <div class="field">
+              <label for="mfa-remove-code">Code from the application <span class="req" aria-hidden="true">*</span></label>
+              <input type="text" id="mfa-remove-code" name="code" inputmode="numeric"
+                     autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required
+                     aria-required="true">
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-danger" type="submit">Remove the second factor</button>
+              <button class="btn" type="button" id="mfa-remove-cancel">Cancel</button>
+            </div>
+          </form>
+        </section>
+
         <section aria-labelledby="sess-h">
           <h2 id="sess-h">Your sessions</h2>
           <div id="sessions" aria-live="polite"></div>

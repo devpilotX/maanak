@@ -30,7 +30,7 @@ SUITES: tuple[tuple[str, int], ...] = (
     ("verify_security.py", 51),
     ("verify_extraction.py", 62),
     ("verify_rules.py", 71),
-    ("verify_auth_flow.py", 53),
+    ("verify_auth_flow.py", 70),
     ("verify_pipeline.py", 56),
     ("verify_workflow.py", 117),
     ("verify_matters.py", 86),
