@@ -3,6 +3,11 @@
 *.env.local
 backup/
 
+# Agent configuration. .kiro/settings/mcp.json holds a personal access token in plain
+# text, so the whole settings directory stays local. The skills under .kiro/skills are
+# documentation and are committed.
+.kiro/settings/
+
 # Release output
 dist/
 
