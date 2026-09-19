@@ -205,7 +205,18 @@ def main() -> int:
                 approved += 1
                 continue
 
-            current = approver.get(f"/api/v1/rules/{item['id']}").json()
+            # Checked rather than assumed. A transient 429 or 503 here used to be parsed as
+            # a rule and fail with KeyError: 'status', which says nothing about what went
+            # wrong. Running scripts/measure_load.py immediately before a seed is what
+            # surfaced it, because the sign-in and refresh budgets were still spent.
+            detail = approver.get(f"/api/v1/rules/{item['id']}")
+            if detail.status_code != 200:
+                blocked.append(f"{item['code']}: read {detail.status_code}")
+                continue
+            current = detail.json()
+            if "status" not in current:
+                blocked.append(f"{item['code']}: read returned no status field")
+                continue
             if current["status"] == "draft":
                 submitted = approver.post(
                     f"/api/v1/rules/{item['id']}/status",
