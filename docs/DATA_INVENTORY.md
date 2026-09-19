@@ -11,7 +11,7 @@ What personal data this system holds, why, who can see it, and what happens to i
 | Password | Authentication | `users.password_hash` | **Nobody.** Argon2id hash only | Replaced on change |
 | Sign-in attempts, IP, user agent | Lockout and investigation | `login_attempts` | Administrators | Operational; no automatic purge in this build |
 | Session records, IP, user agent | Session management and revocation | `user_sessions` | The account holder for their own; administrators for any | Until expiry or revocation |
-| MFA secret | Reserved | `users.mfa_secret` | Nobody | Unused in this build |
+| MFA secret | Generating second-factor codes | `users.mfa_secret` | Nobody; never returned by any endpoint after enrolment | Until the officer or an administrator removes the factor. Stored unencrypted, so a database read discloses it |
 
 An officer's name and email appear in report snapshots, which are immutable. Removing an
 account does not remove them from a report that was already issued: the report records who

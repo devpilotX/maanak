@@ -20,13 +20,19 @@ from ...deps import (
     requires,
     set_session_cookies,
 )
-from ...errors import NotFoundError, SessionExpiredError, ValidationError
+from ...errors import MfaRequiredError, NotFoundError, SessionExpiredError, ValidationError
 from ...models.user import User
 from ...schemas.auth import (
     AdminPasswordResetRequest,
     BootstrapRequest,
     LoginRequest,
     LoginResponse,
+    MfaCodeRequest,
+    MfaDisableRequest,
+    MfaEnrolmentResponse,
+    MfaResetRequest,
+    MfaStatusResponse,
+    MfaVerifyRequest,
     PasswordChangeRequest,
     PasswordPolicyResponse,
     PasswordResetCompleteRequest,
@@ -50,6 +56,7 @@ from ...security.ratelimit import (
     reset as reset_limit,
 )
 from ...services import accounts
+from ...services import mfa as mfa_service
 from ...services.phrasing import counted, verb
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -553,3 +560,142 @@ async def issue_reset(
         "delivery": "returned_once_no_email_configured",
         "note": "Give this to the account holder over a trusted channel. It can be used once.",
     }
+
+
+# --- Second factor -----------------------------------------------------------------------
+#
+# Enrolment is two steps on purpose. The secret is stored when it is generated but the factor
+# is not enabled until a code proves the officer holds it, so a failed scan cannot lock an
+# account out of its own second factor.
+
+
+@router.get("/mfa", response_model=MfaStatusResponse, summary="Whether a second factor is enrolled")
+async def mfa_status(principal: Principal = Depends(get_principal)) -> MfaStatusResponse:
+    return MfaStatusResponse(enrolled=bool(principal.user.mfa_enabled))
+
+
+@router.post(
+    "/mfa/begin",
+    response_model=MfaEnrolmentResponse,
+    summary="Start enrolling an authenticator application",
+)
+async def mfa_begin(
+    principal: Principal = Depends(get_principal),
+    db: AsyncSession = Depends(get_db),
+) -> MfaEnrolmentResponse:
+    detail = await mfa_service.begin_enrolment(db, principal.user)
+    await db.commit()
+    return MfaEnrolmentResponse(**detail)
+
+
+@router.post(
+    "/mfa/confirm",
+    response_model=Acknowledgement,
+    summary="Confirm enrolment with a code from the application",
+)
+async def mfa_confirm(
+    payload: MfaCodeRequest,
+    request: Request,
+    principal: Principal = Depends(get_principal),
+    db: AsyncSession = Depends(get_db),
+) -> Acknowledgement:
+    await mfa_service.confirm_enrolment(
+        db, principal.audit_context(request), principal.user, payload.code
+    )
+    await db.commit()
+    return Acknowledgement(message="A second factor is now required to sign in to this account.")
+
+
+@router.post(
+    "/mfa/verify",
+    response_model=LoginResponse,
+    summary="Finish a sign-in that requires a second factor",
+)
+async def mfa_verify(
+    payload: MfaVerifyRequest,
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+) -> LoginResponse:
+    context = public_audit_context(request)
+    # The same per-address and per-account budgets as sign-in: a challenge must not become a
+    # cheaper place to guess six digits than the password form is to guess a password.
+    await enforce(LOGIN_PER_IP, context.ip_address or "unknown")
+    user_id = mfa_service.read_challenge(payload.challenge)
+    await enforce(LOGIN_PER_ACCOUNT, f"mfa:{user_id}")
+
+    user = await db.get(User, user_id)
+    if user is None or not user.is_active:
+        raise MfaRequiredError.invalid()
+    try:
+        await mfa_service.verify_sign_in_code(user, payload.code)
+    except Exception:
+        await db.commit()
+        raise
+
+    result = await accounts.complete_sign_in(db, context, user=user)
+    await db.commit()
+    await reset_limit(LOGIN_PER_ACCOUNT, f"mfa:{user_id}")
+    set_session_cookies(
+        response,
+        access_token=result.access_token,
+        refresh_token=result.refresh_token,
+        csrf_token=result.csrf_token,
+    )
+
+    from ...security.permissions import JurisdictionScope
+
+    principal = Principal(
+        user=result.user,
+        session_id=result.session.id,
+        scope=JurisdictionScope.for_account(result.user.role, result.user.jurisdiction_code),
+    )
+    return LoginResponse(
+        user=_profile(principal),
+        access_expires_at=result.access_expires_at,
+        csrf_token=result.csrf_token,
+    )
+
+
+# POST rather than DELETE: the request carries a password and a code in its body, and a
+# DELETE with a body is stripped by some proxies and forbidden by some clients.
+@router.post("/mfa/remove", response_model=Acknowledgement, summary="Remove the second factor")
+async def mfa_disable(
+    payload: MfaDisableRequest,
+    request: Request,
+    principal: Principal = Depends(get_principal),
+    db: AsyncSession = Depends(get_db),
+) -> Acknowledgement:
+    await mfa_service.disable(
+        db,
+        principal.audit_context(request),
+        principal.user,
+        password=payload.password,
+        code=payload.code,
+    )
+    await db.commit()
+    return Acknowledgement(message="The second factor has been removed from this account.")
+
+
+@router.post(
+    "/users/{user_id}/mfa/reset",
+    response_model=Acknowledgement,
+    summary="Clear a second factor from an account, for a lost device",
+)
+async def mfa_reset(
+    user_id: uuid.UUID,
+    payload: MfaResetRequest,
+    request: Request,
+    principal: Principal = Depends(requires(Permission.USER_RESET_PASSWORD)),
+    db: AsyncSession = Depends(get_db),
+) -> Acknowledgement:
+    target = await db.get(User, user_id)
+    if target is None:
+        raise NotFoundError("That account was not found.")
+    await mfa_service.reset_for_account(
+        db, principal.audit_context(request), target, reason=payload.reason
+    )
+    await db.commit()
+    return Acknowledgement(
+        message="The second factor has been cleared. The account holder must enrol again."
+    )

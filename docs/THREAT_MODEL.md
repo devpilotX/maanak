@@ -36,8 +36,11 @@
 | Stale privileges | The session row is re-read on every request, so revocation takes effect immediately. A role or jurisdiction change invalidates the token's claims and forces a refresh |
 | Signing-key compromise | `JWT_SECRET_PREVIOUS` allows rotation without ending sessions |
 
-Residual: no second factor is enforced. A stolen password plus a stolen device is enough.
-MFA fields exist on the model; nothing uses them.
+Residual: a second factor is available but not compulsory. TOTP enrolment is per account and
+nothing forces an officer to enrol, so an account without it still falls to a stolen password
+alone. The TOTP secret is stored unencrypted, so a database read discloses enough to generate
+codes. Attempts against a challenge share the per-address and per-account sign-in budgets and
+have no tighter limit of their own.
 
 ### Authorisation
 

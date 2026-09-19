@@ -85,6 +85,24 @@ class PermissionDeniedError(MaanakError):
     message = "Your role does not permit this action."
 
 
+class MfaRequiredError(MaanakError):
+    """The password was correct and a second factor is still required.
+
+    401 rather than 403: the request is not yet authenticated. The challenge travels in
+    ``details`` so the client can finish the sign-in without holding the password.
+    """
+
+    status_code = 401
+
+    @classmethod
+    def invalid(cls) -> MfaRequiredError:
+        """A refusal that reveals nothing about which part was wrong."""
+        return cls(
+            "This sign-in attempt is no longer valid. Start again.",
+            code="mfa_challenge_invalid",
+        )
+
+
 class NotFoundError(MaanakError):
     """Also returned for records outside the caller's jurisdiction.
 

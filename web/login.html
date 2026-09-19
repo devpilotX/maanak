@@ -31,6 +31,26 @@
         </div>
       </form>
 
+      <!-- Shown only when an account has a second factor. The password form above has
+           already been accepted at that point, but no session exists until a code
+           verifies, so nothing is signed in while this is on screen. -->
+      <section id="mfa-section" aria-labelledby="mfa-h" hidden>
+        <h2 id="mfa-h">Enter the code from your authenticator</h2>
+        <form id="mfa-form" novalidate>
+          <div id="mfa-status" class="status-region" aria-live="polite"></div>
+          <div class="field">
+            <label for="mfa-code">Six-digit code <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="mfa-code" name="code" inputmode="numeric"
+                   autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required
+                   aria-required="true">
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="btn btn-accent" id="mfa-btn">Finish signing in</button>
+            <button type="button" class="btn" id="mfa-back">Start again</button>
+          </div>
+        </form>
+      </section>
+
       <section id="bootstrap-section" hidden>
         <hr class="section-rule">
         <h2>One-time administrator setup</h2>

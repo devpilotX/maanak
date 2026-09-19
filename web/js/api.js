@@ -129,6 +129,9 @@ export const auth = {
   status: () => api.get('/auth/status'),
   me: () => api.get('/auth/me', undefined),
   signIn: (email, password) => api.post('/auth/sign-in', { email, password }),
+  // Finishes a sign-in that answered with a challenge instead of a session.
+  completeSecondFactor: (challenge, code) => api.post('/auth/mfa/verify', { challenge, code }),
+  secondFactorStatus: () => api.get('/auth/mfa'),
   signOut: () => api.post('/auth/sign-out'),
   bootstrap: (payload) => api.post('/auth/bootstrap', payload),
   passwordPolicy: () => api.get('/auth/password-policy'),

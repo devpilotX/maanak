@@ -110,8 +110,11 @@
       <ul>
         <li><strong>TLS.</strong> This deployment serves plain HTTP. Cookies are therefore not
           marked secure. Both must change before anything real touches it.</li>
-        <li><strong>Multi-factor authentication.</strong> A field exists to hold a secret;
-          nothing uses it. There is no second factor and no single sign-on.</li>
+        <li><strong>Compulsory multi-factor authentication.</strong> A second factor is
+          available, using time-based codes from an authenticator application, and it is
+          verified against the test vectors RFC 6238 publishes. Nothing requires an officer
+          to enrol, so an account without it still rests on a password alone. There is no
+          single sign-on.</li>
         <li><strong>Malware scanning.</strong> Uploads are validated for type and size, not
           scanned for malicious content.</li>
         <li><strong>Secrets management.</strong> Secrets come from environment variables. There
