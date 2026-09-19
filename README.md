@@ -127,8 +127,10 @@ contributed to Open Food Facts, using each product's declared quantity as the gr
 truth. Six of the 14 yielded any declaration at all, ten declarations were located in
 total, and **net quantity was read from none of them**. One of the failures is a crop of a
 salt pouch that shows "NET QUANTITY: 1 kg" in large bold type; all seven reader profiles
-return either nothing or noise, and Tesseract on its own does no better, so the limit is
-the engine rather than the configuration.
+return either nothing or noise on the whole image. Crop to those words and plain greyscale
+reads "NET QUANTITY:" exactly, which moves the diagnosis: the engine can read this print,
+and asking it to segment a whole curved pack in one pass is what defeats it. The value is
+harder still, because "1 kg" misreads even when isolated.
 
 **There is no 100 per cent here and there is not going to be.** What the system does
 instead is refuse to turn a failed reading into a finding. Across all 14 photographs,
@@ -289,7 +291,7 @@ Measured on the current tree:
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 29,186 words |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 29,389 words |
 | pytest | 157 unit items, 5 live-stack items |
 | `quality.sh` | 133 files formatted, lint clean, mypy clean on 86 files |
 | `verify_package.sh` | 39 checks on the release archive |
