@@ -294,6 +294,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # gitleaks scans the range of commits a push introduced, so it needs their
+          # parents. The default shallow clone fetches only the tip, and a push of more
+          # than one commit then fails with "unknown revision" on the range rather than
+          # on a finding. A scan that cannot read anything must not be mistaken for a
+          # clean scan, and gitleaks is right to exit non-zero, so give it the history.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
