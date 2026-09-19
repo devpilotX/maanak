@@ -109,6 +109,37 @@ This is the clearest case of a general rule: the system would rather say it does
 
 ---
 
+## How well the reader actually reads
+
+Two benchmarks, both small, and the weaker one is the honest one.
+
+On labels this project generates, `scripts/measure_ocr_accuracy.py` scores ten
+declarations with known correct values under eight kinds of degradation, and gets 72 of 80
+fields right. Every one of the eight failures is the same failure: the reader returns
+*lodised* for *Iodised*, because capital I and lowercase l are the same glyph in a
+sans-serif face. No profile or dictionary setting fixed it, so the reading is kept and the
+ambiguity is reported to the officer instead of being silently corrected. A rule that
+turned a leading lowercase l into a capital I would also turn *Lemon* into *Iemon*.
+
+On photographs of real packaging the picture is much worse, and it is worth stating
+plainly. `scripts/measure_ocr_real.py` runs 14 consumer photographs of Indian packs
+contributed to Open Food Facts, using each product's declared quantity as the ground
+truth. Six of the 14 yielded any declaration at all, ten declarations were located in
+total, and **net quantity was read from none of them**. One of the failures is a crop of a
+salt pouch that shows "NET QUANTITY: 1 kg" in large bold type; all seven reader profiles
+return either nothing or noise, and Tesseract on its own does no better, so the limit is
+the engine rather than the configuration.
+
+**There is no 100 per cent here and there is not going to be.** What the system does
+instead is refuse to turn a failed reading into a finding. Across all 14 photographs,
+including the five the quality gate refused outright, the number of non-compliant findings
+produced before officer review was **zero**. That is the property worth having: the reader
+is unreliable on real packaging, and the design already assumes it.
+
+[docs/KNOWN_LIMITS.md](docs/KNOWN_LIMITS.md) records both figures and the diagnosis.
+
+---
+
 ## Run it
 
 Docker with Compose v2 is the only requirement. No Python, Node or database on the host.
@@ -250,17 +281,17 @@ Measured on the current tree:
 | `verify_matters.py` | 86 checks |
 | `verify_browser.py` | 60 checks, 0 axe violations on 8 pages |
 | `verify_officer_flow.py` | 44 checks: the whole officer workflow driven through the interface, from opening an inspection to opening a case |
-| `audit_app.py` | 106 checks: every page, every detail screen, 0 axe violations |
+| `audit_app.py` | 134 checks: every page, all 14 workspace screens scanned with axe, 0 violations; every register shows real rows; no sideways scroll at 320, 360, 390 or 820 pixels |
 | `check_api_reach.py` | 92 API operations: 68 reached from a screen, 24 recorded with a reason, 0 unexplained |
 | `check_permission_names.py` | 25 permission names used by the interface, 0 that do not exist |
-| `check_js_bindings.py` | 26 modules, 0 using a helper they never imported |
+| `check_js_bindings.py` | 27 modules, 0 using a helper they never imported |
 | `check_error_messages.py` | 164 error messages, 0 naming a JSON key or a column |
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 28,100 words |
-| pytest | 130 unit items, 5 live-stack items |
-| `quality.sh` | 119 files formatted, lint clean, mypy clean on 85 files |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 29,229 words |
+| pytest | 142 unit items, 5 live-stack items |
+| `quality.sh` | 133 files formatted, lint clean, mypy clean on 86 files |
 | `verify_package.sh` | 39 checks on the release archive |
 
 Two of those exist because the standard tooling does not cover them. `measure_a11y.py`
@@ -348,7 +379,8 @@ Absent: TLS, multi-factor authentication, malware scanning on upload, managed se
 monitoring, alerting, backups, an incident process, load testing, and any independent
 security or accessibility assessment. No screen reader has been run against the interface.
 Panning the evidence viewer needs a pointer drag, which fails WCAG 2.2 success criterion
-2.5.7. Nine of the fourteen workspace screens have not been measured for accessibility.
+2.5.7. No screen reader has been run against the interface, and nobody has tested it with
+disabled users.
 
 Before field use, an authority must have every legal interpretation confirmed against the
 gazette and recorded against the rule version; terminate TLS and set `COOKIE_SECURE=true`,
