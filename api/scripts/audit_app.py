@@ -58,6 +58,23 @@ WORKSPACE_PAGES = [
     ("app/account.html", "Your account"),
 ]
 
+#: What each screen must actually show once the workspace holds the worked example.
+#: "rendered content or an empty state" passes on a screen that silently shows nothing,
+#: which is the failure this is meant to catch. Each entry is a selector that only
+#: matches when real records reached the page, and the least it must find.
+WORKSPACE_DATA = {
+    "app/overview.html": (".metric", 3),
+    "app/inspections.html": ("table.register tbody tr", 1),
+    "app/complaints.html": ("table.register tbody tr", 1),
+    "app/cases.html": ("table.register tbody tr", 1),
+    "app/rules.html": ("table.register tbody tr", 11),
+    "app/products.html": ("table.register tbody tr", 1),
+    "app/reports.html": ("table.register tbody tr", 1),
+    "app/audit.html": ("table.register tbody tr", 5),
+    "app/admin.html": ("table.register tbody tr", 7),
+    "app/account.html": ("dl.defs dt", 3),
+}
+
 failures: list[str] = []
 passes = 0
 
@@ -318,7 +335,18 @@ def audit_workspace(page: Page, watcher: PageWatcher) -> None:
         )
         empty_or_data = page.locator("table.register, .state, .metrics, .panel, .defs").count()
         record(empty_or_data > 0, f"{name}: rendered content or an explicit empty state")
+        selector, least = WORKSPACE_DATA[name]
+        found = page.locator(selector).count()
+        record(
+            found >= least,
+            f"{name}: shows {found} real {selector.split()[-1]} rows or fields, at least "
+            f"{least} expected from the seeded workspace",
+        )
         no_stringified_objects(page, name)
+        # Every workspace screen is scanned, not a sample of them. Four registers were
+        # covered by verify_browser.py and the other ten screens were not measured at
+        # all, which docs/KNOWN_LIMITS.md recorded as nine of fourteen unmeasured.
+        run_axe(page, name)
 
 
 #: Detail screens take a record id, so they can only be audited once the workspace
@@ -386,6 +414,47 @@ def audit_detail_pages(page: Page, watcher: PageWatcher) -> None:
         broken = page.locator(".notice-error").count()
         record(broken == 0, f"{path}: no error state on screen")
         no_stringified_objects(page, path)
+        run_axe(page, path)
+
+
+#: Widths a field officer actually holds. 390 is an iPhone 14, 360 the most common
+#: Android width in India, and 320 the narrowest width WCAG 1.4.10 requires reflow at.
+RESPONSIVE_WIDTHS = (320, 360, 390, 820)
+
+
+def audit_responsive(page: Page) -> None:
+    """No workspace screen may scroll sideways at a phone width.
+
+    A register is a wide table, so this is the screen family most likely to overflow.
+    The tables are inside .table-wrap, which scrolls on its own; the failure being
+    checked is the document scrolling, which moves the whole layout and hides content.
+    """
+    print()
+    print("=== workspace screens reflow without a horizontal scrollbar ===")
+    paths = [name for name, _ in WORKSPACE_PAGES]
+    for width in RESPONSIVE_WIDTHS:
+        page.set_viewport_size({"width": width, "height": 900})
+        overflowing: list[str] = []
+        for name in paths:
+            page.goto(f"{BASE_URL}/{name}", wait_until="domcontentloaded")
+            try:
+                page.wait_for_selector("h1", timeout=15000)
+            except Exception:
+                overflowing.append(f"{name} (did not render)")
+                continue
+            page.wait_for_timeout(500)
+            overflow = page.evaluate(
+                "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
+            )
+            # One pixel of rounding is not a layout defect.
+            if overflow > 1:
+                overflowing.append(f"{name} (+{overflow}px)")
+        record(
+            not overflowing,
+            f"{len(paths)} workspace screens at {width}px: no horizontal overflow"
+            + (f": {overflowing}" if overflowing else ""),
+        )
+    page.set_viewport_size({"width": 1440, "height": 1000})
 
 
 def main() -> int:
@@ -403,6 +472,7 @@ def main() -> int:
             audit_workspace(page, watcher)
             audit_detail_pages(page, watcher)
             audit_as_reviewer(page, watcher)
+            audit_responsive(page)
         else:
             record(False, "could not sign in; workspace screens not audited")
         browser.close()

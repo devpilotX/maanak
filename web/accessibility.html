@@ -106,19 +106,23 @@
       </div>
 
       <h2 id="scope">What the claim covers</h2>
-      <p>Fourteen public pages, four workspace registers and the inspection review screen were
-        measured. The workspace has fourteen screens, and the nine not listed have not been
-        measured.</p>
+      <p>Every page in the application. Fourteen public pages, all fourteen workspace
+        screens, and the inspection review screen a second time as a reviewer, because
+        parts of it only render for a role holding <code>inspection.decide</code>. An
+        earlier revision measured four workspace registers and left the other ten
+        unscanned, which this statement recorded as a gap. It is closed.</p>
       <p>The evidence review screen is the most complex thing here. It is now scanned, and the
         known failure in section 5 lives in it.</p>
 
       <h2 id="method">How it was measured</h2>
       <p>Three separate checks run against a real browser rather than against markup in
         isolation.</p>
-      <p>axe-core runs against nineteen pages: all fourteen public pages, four workspace
-        registers, and the inspection review screen, which is reached by record id and so
-        needs a real inspection in the workspace before it can be scanned at all. It is
-        configured for WCAG 2.0, 2.1 and 2.2 at level A and AA together. The result is
+      <p>axe-core runs against twenty-nine pages: all fourteen public pages, all fourteen
+        workspace screens, and the inspection review screen a second time as a reviewer. The
+        four detail screens among those are reached by record id, so they need a real
+        inspection, rule, complaint and case in the workspace before they can be scanned at
+        all. It is configured for WCAG 2.0, 2.1 and 2.2 at level A and AA together. The
+        result is
         <strong>zero violations at any severity</strong>, not merely zero serious ones. A
         further fifty-nine assertions cover landmarks, heading order, form labelling, error
         announcement, focus behaviour, reflow and language marking.</p>
@@ -204,7 +208,9 @@
           axe-core checks.</li>
         <li>The PDF and editable reports the system generates. A generated PDF has its own
           tagging and reading-order requirements, and neither has been checked.</li>
-        <li>Nine of the fourteen workspace screens.</li>
+        <li>Manual keyboard and focus-order testing on the ten workspace screens that are
+          now scanned automatically. An axe pass finds markup faults, not an illogical tab
+          order.</li>
       </ul>
       <p>Independent accessibility testing is the item most worth commissioning before any real
         deployment, and it has not been commissioned.</p>
