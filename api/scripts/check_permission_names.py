@@ -24,6 +24,11 @@ from app.security.permissions import ROLE_PERMISSIONS, Permission
 
 CAN_RE = re.compile(r"""\bcan\(\s*['"]([^'"]+)['"]""")
 ATTR_RE = re.compile(r"""data-permission=['"]([^'"]+)['"]""")
+#: The workspace nav declares its permissions in a table rather than in markup, as
+#: ``['/app/audit.html', 'Audit', 'audit.read']``, so neither pattern above sees them.
+#: Without this the eight nav permissions were never validated and a typo in one would
+#: have hidden the link from every role instead of failing a check.
+NAV_RE = re.compile(r"""\[\s*['"]/app/[^'"]+['"]\s*,\s*['"][^'"]*['"]\s*,\s*['"]([^'"]+)['"]""")
 
 
 def main() -> int:
@@ -36,7 +41,7 @@ def main() -> int:
     web = Path(__file__).resolve().parents[2] / "web"
     for path in sorted(web.rglob("*.js")) + sorted(web.rglob("*.html")):
         text = path.read_text(encoding="utf-8")
-        for name in CAN_RE.findall(text) + ATTR_RE.findall(text):
+        for name in CAN_RE.findall(text) + ATTR_RE.findall(text) + NAV_RE.findall(text):
             usages.setdefault(name, []).append(str(path))
 
     failures = 0

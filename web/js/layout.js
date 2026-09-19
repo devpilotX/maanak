@@ -4,21 +4,27 @@ import { el, $, clear, showLoading, showEmpty, showError, NOT_RECORDED } from '.
 import { api } from './api.js';
 
 // The work an officer does every day. These carry the visual weight.
+// Each entry is [href, label, permission]. The permission is the one the screen's own
+// register needs, and it is what stops the header offering a link that answers 403. A
+// reviewer holds neither audit.read nor user.read, and a rule administrator holds none
+// of complaint.read, case.read, product.read or report.read, so before this the header
+// showed a rule administrator five links that could only fail. Overview needs nothing
+// beyond a session, so it carries no permission.
 const PRIMARY_NAV = [
-  ['/app/overview.html', 'Overview'],
-  ['/app/inspections.html', 'Inspections'],
-  ['/app/complaints.html', 'Complaints'],
-  ['/app/cases.html', 'Cases'],
-  ['/app/rules.html', 'Rules'],
+  ['/app/overview.html', 'Overview', null],
+  ['/app/inspections.html', 'Inspections', 'inspection.read'],
+  ['/app/complaints.html', 'Complaints', 'complaint.read'],
+  ['/app/cases.html', 'Cases', 'case.read'],
+  ['/app/rules.html', 'Rules', 'rule.read'],
 ];
 
 // Reference registers and administration: reached often enough to belong in the
 // header, but they should not compete with the primary work.
 const SECONDARY_NAV = [
-  ['/app/products.html', 'Products'],
-  ['/app/reports.html', 'Reports'],
-  ['/app/audit.html', 'Audit'],
-  ['/app/admin.html', 'Administration'],
+  ['/app/products.html', 'Products', 'product.read'],
+  ['/app/reports.html', 'Reports', 'report.read'],
+  ['/app/audit.html', 'Audit', 'audit.read'],
+  ['/app/admin.html', 'Administration', 'user.read'],
 ];
 
 export function mountAppChrome() {
@@ -36,8 +42,11 @@ export function mountAppChrome() {
   const nav = el('nav', { class: 'app-nav', 'aria-label': 'Workspace' });
   const addLinks = (group, className) => {
     const set = el('div', { class: className });
-    for (const [href, label] of group) {
+    for (const [href, label, permission] of group) {
       const a = el('a', { href, text: label });
+      // requireAuth() calls applyPermissionVisibility() after the profile arrives, and
+      // the header is mounted before that, so marking the link here is enough.
+      if (permission) a.setAttribute('data-permission', permission);
       if (href.endsWith(current)) a.setAttribute('aria-current', 'page');
       set.appendChild(a);
     }
