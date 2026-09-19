@@ -3,10 +3,10 @@
 *.env.local
 backup/
 
-# Agent configuration. .kiro/settings/mcp.json holds a personal access token in plain
-# text, so the whole settings directory stays local. The skills under .kiro/skills are
-# documentation and are committed.
-.kiro/settings/
+# Agent configuration. Not part of Maanak: nothing under api/, web/, docs/ or scripts/
+# reads it and it is not in the release archive. .kiro/settings/mcp.json also holds a
+# personal access token in plain text, so the whole directory stays local.
+.kiro/
 
 # Release output
 dist/
