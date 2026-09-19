@@ -277,7 +277,7 @@ Measured on the current tree:
 | `verify_security.py` | 51 checks |
 | `verify_extraction.py` | 62 checks |
 | `verify_rules.py` | 71 checks |
-| `verify_auth_flow.py` | 53 checks |
+| `verify_auth_flow.py` | 70 checks |
 | `verify_pipeline.py` | 56 checks |
 | `verify_workflow.py` | 117 checks |
 | `verify_matters.py` | 86 checks |
@@ -291,9 +291,9 @@ Measured on the current tree:
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 30,168 words |
-| pytest | 157 unit items, 5 live-stack items |
-| `quality.sh` | 133 files formatted, lint clean, mypy clean on 86 files |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 30,550 words |
+| pytest | 186 unit items, 5 live-stack items |
+| `quality.sh` | 138 files formatted, lint clean, mypy clean on 88 files |
 | `verify_package.sh` | 39 checks on the release archive |
 | `verify_restore.py` | 11 checks on a restored deployment: the audit chain recomputes and its head matches what the backup recorded, the append-only trigger survived, and every stored object still matches its hash |
 | `measure_load.py` | Reads peak at 111 requests per second at 4 threads, p50 35 ms and p95 56 ms; beyond that throughput is flat and latency doubles. The worker drains 18 OCR jobs a minute at 3.3 seconds each, bounded by `max_jobs = 2`. One machine, not a benchmark |
@@ -379,9 +379,8 @@ This is a working local deployment, not an accredited production system. The gap
 named individually rather than gestured at, here and on the site's own
 [security](web/security.html) and [accessibility](web/accessibility.html) pages.
 
-Absent: TLS, multi-factor authentication, malware scanning on upload, managed secrets,
-monitoring, alerting, an incident process, and any independent security or accessibility
-assessment. No screen reader has been run against the interface, and nobody
+Absent: TLS, malware scanning on upload, managed secrets, monitoring, alerting, an incident
+process, and any independent security or accessibility assessment. No screen reader has been run against the interface, and nobody
 has tested it with disabled users.
 
 Backup and restore are implemented and proven rather than absent: `scripts/backup.sh`,
@@ -391,8 +390,9 @@ missing there is scheduling and an off-host target, both of which are deployment
 
 Before field use, an authority must have every legal interpretation confirmed against the
 gazette and recorded against the rule version; terminate TLS and set `COOKIE_SECURE=true`,
-`DOCS_ENABLED=false` and explicit `TRUSTED_HOSTS`; move secrets into a managed store; add
-MFA or SSO; replace the development report signer with a real signing service or leave
+`DOCS_ENABLED=false` and explicit `TRUSTED_HOSTS`; move secrets into a managed store;
+require the second factor rather than only offering it; replace the development report
+signer with a real signing service or leave
 signing off rather than implying a signature exists; and commission independent security,
 accessibility, legal and user-acceptance testing.
 

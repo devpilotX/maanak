@@ -139,3 +139,45 @@ class LoginResponse(ReadSchema):
 class PasswordPolicyResponse(ReadSchema):
     min_length: int
     requirements: list[str]
+
+
+class MfaCodeRequest(Schema):
+    """A six-digit code from an authenticator application."""
+
+    # Not a plain int: a leading zero is significant and int() would eat it.
+    code: str = Field(min_length=6, max_length=8, pattern=r"^[0-9]{6,8}$")
+
+
+class MfaDisableRequest(Schema):
+    """Removing a second factor needs the password as well as a code."""
+
+    password: str = Field(min_length=1, max_length=256)
+    code: str = Field(min_length=6, max_length=8, pattern=r"^[0-9]{6,8}$")
+
+
+class MfaVerifyRequest(Schema):
+    """Finishing a sign-in that returned a challenge."""
+
+    challenge: str = Field(min_length=16, max_length=4096)
+    code: str = Field(min_length=6, max_length=8, pattern=r"^[0-9]{6,8}$")
+
+
+class MfaResetRequest(Schema):
+    """An administrator clearing a second factor from another account."""
+
+    reason: str = Field(min_length=10, max_length=500)
+
+
+class MfaEnrolmentResponse(ReadSchema):
+    """What an authenticator application needs to enrol.
+
+    The secret is returned once, at enrolment, and is never readable again.
+    """
+
+    secret: str
+    provisioning_uri: str
+    qr_png_base64: str
+
+
+class MfaStatusResponse(ReadSchema):
+    enrolled: bool
