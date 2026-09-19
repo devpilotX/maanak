@@ -16,6 +16,40 @@ evidence is gone.
 `MINIO_KMS_SECRET_KEY` deserves emphasis: objects are written with server-side
 encryption. Losing that key loses the evidence, whatever the object backup contains.
 
+## The scripts
+
+The procedure below is what the scripts do. They exist because a documented procedure that
+has never been run is a guess.
+
+```bash
+bash scripts/backup.sh                      # writes backup/<timestamp>/
+bash scripts/backup.sh --include-env        # also captures .env, which holds every secret
+
+bash scripts/restore.sh backup/<stamp> --i-understand-this-destroys-current-data
+
+docker compose run --rm --no-deps -v "$PWD:/repo" -e PYTHONPATH=/repo/api migrate \
+  python /repo/api/scripts/verify_restore.py \
+    --expect /repo/backup/<stamp>/audit-chain-at-backup.json
+```
+
+`restore.sh` drops and recreates the database, so it refuses to run without the
+confirmation flag. `backup.sh` does not copy `.env` unless asked, because that file holds
+`JWT_SECRET` and `MINIO_KMS_SECRET_KEY` and should not land silently beside the dumps.
+
+`verify_restore.py` is the part worth having. It runs against the database rather than
+through the API, so it needs no credentials, and it reuses the application's own integrity
+code: `audit.verify_chain`, `audit.chain_summary`, `evidence.verify_integrity`,
+`storage.verify_stored_hash` and the report snapshot check. Eleven checks on a seeded
+workspace. It exits non-zero on any failure and refuses to pass when it found nothing to
+check.
+
+Measured on a real cycle: backup of a seeded workspace, `drop database`, restore, verify.
+Chain head sequence 83 and hash `312d165b` matched the backup exactly, the append-only
+trigger survived, and all six stored objects matched their recorded hashes. Both failure
+directions were exercised too: a deliberately wrong expected chain head produced three
+failures, and corrupting one evidence object and one report document in place was detected
+and named.
+
 ## Backup
 
 ```bash
