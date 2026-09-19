@@ -291,10 +291,11 @@ Measured on the current tree:
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 29,389 words |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 29,645 words |
 | pytest | 157 unit items, 5 live-stack items |
 | `quality.sh` | 133 files formatted, lint clean, mypy clean on 86 files |
 | `verify_package.sh` | 39 checks on the release archive |
+| `verify_restore.py` | 11 checks on a restored deployment: the audit chain recomputes and its head matches what the backup recorded, the append-only trigger survived, and every stored object still matches its hash |
 
 Two of those exist because the standard tooling does not cover them. `measure_a11y.py`
 measures WCAG 2.2 success criterion 2.5.8, for which axe-core has no rule, and enumerates
@@ -378,9 +379,14 @@ named individually rather than gestured at, here and on the site's own
 [security](web/security.html) and [accessibility](web/accessibility.html) pages.
 
 Absent: TLS, multi-factor authentication, malware scanning on upload, managed secrets,
-monitoring, alerting, backups, an incident process, load testing, and any independent
-security or accessibility assessment. No screen reader has been run against the interface,
-and nobody has tested it with disabled users.
+monitoring, alerting, an incident process, load testing, and any independent security or
+accessibility assessment. No screen reader has been run against the interface, and nobody
+has tested it with disabled users.
+
+Backup and restore are implemented and proven rather than absent: `scripts/backup.sh`,
+`scripts/restore.sh` and `api/scripts/verify_restore.py`, the last of which re-verifies a
+restored deployment against the audit chain head recorded at backup time. What is still
+missing there is scheduling and an off-host target, both of which are deployment decisions.
 
 Before field use, an authority must have every legal interpretation confirmed against the
 gazette and recorded against the rule version; terminate TLS and set `COOKIE_SECURE=true`,
