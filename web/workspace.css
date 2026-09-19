@@ -95,6 +95,11 @@
   top: 0.5rem;
 }
 .viewer-toolbar { display: flex; gap: 0.4rem; padding: 0.5rem; border-bottom: 1px solid var(--rule); flex-wrap: wrap; background: var(--panel); align-items: center; }
+/* A single arrow glyph does not fill the padding the way a word does, so the width is set
+ * explicitly rather than left to the text. measure_a11y.py enforces 24 by 24. */
+.viewer-pan { display: inline-flex; gap: 0.2rem; }
+.btn-pan { min-width: 28px; padding-left: 0.35rem; padding-right: 0.35rem; }
+.viewer-stage:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
 .viewer-stage {
   position: relative;
   overflow: auto;
