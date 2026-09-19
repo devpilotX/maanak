@@ -69,10 +69,22 @@
                 <button type="button" class="btn btn-sm" id="zoom-in" aria-label="Zoom in">+</button>
                 <button type="button" class="btn btn-sm" id="rotate" aria-label="Rotate 90 degrees">Rotate</button>
                 <button type="button" class="btn btn-sm" id="reset-view">Reset</button>
+                <!-- Panning by drag alone fails WCAG 2.2 SC 2.5.7. These move the view on
+                     a single click, so an officer who cannot drag can still compare a
+                     reading against the part of the photograph it came from. -->
+                <span class="viewer-pan" role="group" aria-label="Pan the image">
+                  <button type="button" class="btn btn-sm btn-pan" id="pan-left" aria-label="Pan left">&#8592;</button>
+                  <button type="button" class="btn btn-sm btn-pan" id="pan-up" aria-label="Pan up">&#8593;</button>
+                  <button type="button" class="btn btn-sm btn-pan" id="pan-down" aria-label="Pan down">&#8595;</button>
+                  <button type="button" class="btn btn-sm btn-pan" id="pan-right" aria-label="Pan right">&#8594;</button>
+                </span>
                 <button type="button" class="btn btn-sm" id="toggle-ocr" aria-pressed="false">Raw OCR</button>
                 <a class="btn btn-sm" id="download-original" data-permission="evidence.download_original" hidden download>Original file</a>
               </div>
-              <div class="viewer-stage" id="viewer-stage">
+              <!-- tabindex and a group role so the stage is a focus target: it is already
+                   overflow:auto, so the browser then pans it with the arrow keys. -->
+              <div class="viewer-stage" id="viewer-stage" tabindex="0" role="group"
+                   aria-label="Evidence image, pan with the arrow keys">
                 <div class="viewer-canvas-wrap" id="canvas-wrap">
                   <img id="evidence-img" alt="Selected evidence image" hidden>
                   <div class="region-box" id="region-box" hidden></div>

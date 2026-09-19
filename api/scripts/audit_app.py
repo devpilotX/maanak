@@ -263,6 +263,75 @@ def audit_as_reviewer(page: Page, watcher: PageWatcher) -> None:
     )
     no_stringified_objects(page, "app/inspection.html as reviewer")
     run_axe(page, "app/inspection.html as reviewer")
+    check_pan_without_drag(page)
+
+
+def check_pan_without_drag(page: Page) -> None:
+    """WCAG 2.2 SC 2.5.7: panning must work by single pointer, not only by dragging.
+
+    Asserting that the buttons exist would prove nothing, so this reads the scroll
+    position, clicks a pan control and requires the position to have actually moved.
+
+    The evidence image is stubbed with a large SVG first. Two reasons, both real rather
+    than convenient: object storage is published as ``localhost:9000``, which resolves from
+    an officer's browser on the host but not from inside this container, and the pannable
+    area comes from the image being larger than the stage rather than from the zoom, because
+    a CSS transform does not create scrollable overflow. A 2400 by 1600 stub reproduces the
+    field condition, where a photograph is far larger than the panel it is shown in.
+    """
+    print("=== the evidence viewer pans without a drag (SC 2.5.7) ===")
+    if page.locator("#viewer-stage").count() == 0:
+        record(False, "the viewer is not on this screen, so panning cannot be checked")
+        return
+
+    big = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1600">'
+        '<rect width="2400" height="1600" fill="#ddd"/>'
+        '<text x="80" y="200" font-size="90">NET QUANTITY: 1 kg</text></svg>'
+    )
+    page.route(
+        "**/maanak-*/**",
+        lambda route: route.fulfill(status=200, content_type="image/svg+xml", body=big),
+    )
+    page.reload(wait_until="domcontentloaded")
+    page.wait_for_timeout(2500)
+
+    loaded = page.evaluate(
+        "() => { const i = document.querySelector('#evidence-img');"
+        " return i && !i.hidden && i.naturalWidth > 1000; }"
+    )
+    record(loaded, "an evidence image larger than the stage is displayed")
+    if not loaded:
+        return
+
+    overflow = page.evaluate(
+        "() => { const s = document.querySelector('#viewer-stage');"
+        " return s.scrollWidth > s.clientWidth + 4 || s.scrollHeight > s.clientHeight + 4; }"
+    )
+    record(overflow, "the image is larger than the stage, so there is somewhere to pan")
+
+    for control, axis in (("#pan-right", "scrollLeft"), ("#pan-down", "scrollTop")):
+        if page.locator(control).count() == 0:
+            record(False, f"{control} is missing, so panning needs a drag")
+            continue
+        before = page.evaluate(f"() => document.querySelector('#viewer-stage').{axis}")
+        page.click(control)
+        page.wait_for_timeout(800)
+        after = page.evaluate(f"() => document.querySelector('#viewer-stage').{axis}")
+        record(after != before, f"{control} moved {axis} without a drag ({before} to {after})")
+
+    size = page.evaluate(
+        "() => { const b = document.querySelector('#pan-right').getBoundingClientRect();"
+        " return [Math.round(b.width), Math.round(b.height)]; }"
+    )
+    record(
+        size[0] >= 24 and size[1] >= 24,
+        f"the pan control meets the 24 by 24 minimum target size ({size[0]}x{size[1]})",
+    )
+    focusable = page.evaluate(
+        "() => document.querySelector('#viewer-stage').getAttribute('tabindex') === '0'"
+    )
+    record(focusable, "the stage is a focus target, so the arrow keys pan it")
 
 
 AXE_ROUTE = "/__axe-core.js"

@@ -75,7 +75,20 @@ export function createViewer() {
   $('#rotate').addEventListener('click', () => { rotation = (rotation + 90) % 360; applyTransform(); });
   $('#reset-view').addEventListener('click', () => { scale = 1; rotation = 0; applyTransform(); stage.scrollTo(0, 0); });
 
-  // Drag to pan
+  // Pan without dragging, for WCAG 2.2 SC 2.5.7. A quarter of the visible extent per
+  // click, so the step stays useful whether the stage is 320px wide or 1200.
+  function panBy(dx, dy) {
+    if (img.hidden) return;
+    const stepX = Math.max(40, Math.round(stage.clientWidth * 0.25));
+    const stepY = Math.max(40, Math.round(stage.clientHeight * 0.25));
+    stage.scrollBy({ left: dx * stepX, top: dy * stepY, behavior: 'smooth' });
+  }
+  $('#pan-left').addEventListener('click', () => panBy(-1, 0));
+  $('#pan-right').addEventListener('click', () => panBy(1, 0));
+  $('#pan-up').addEventListener('click', () => panBy(0, -1));
+  $('#pan-down').addEventListener('click', () => panBy(0, 1));
+
+  // Drag to pan. Kept as a convenience; the buttons above are the accessible route.
   let dragging = false; let sx = 0; let sy = 0; let sl = 0; let st = 0;
   stage.addEventListener('pointerdown', (e) => {
     if (img.hidden) return;

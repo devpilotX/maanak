@@ -28,7 +28,7 @@
 
       <div class="standing-caveat">
         <p><strong>Partially conformant means some content does not fully conform.</strong>
-          The barriers in section 5 are known and unfixed. No screen reader has been tested
+          The barrier in section 5 is known and unfixed. No screen reader has been tested
           against this software, and no person with a disability has used it, so the parts of
           the standard that only a human can judge are unverified.</p>
       </div>
@@ -74,7 +74,10 @@
             <tr>
               <td>2.5.7 Dragging Movements</td>
               <td>AA</td>
-              <td><strong>Not met.</strong> See section 5.</td>
+              <td><strong>Met.</strong> The evidence viewer has directional pan controls that
+                move the view on a single click, measured rather than asserted: the suite
+                reads the scroll position, clicks the control and requires it to have
+                changed.</td>
             </tr>
             <tr>
               <td>2.5.8 Target Size (Minimum)</td>
@@ -112,7 +115,8 @@
         earlier revision measured four workspace registers and left the other ten
         unscanned, which this statement recorded as a gap. It is closed.</p>
       <p>The evidence review screen is the most complex thing here. It is now scanned, and the
-        known failure in section 5 lives in it.</p>
+        dragging failure it used to carry is fixed: panning has directional controls, and the
+        suite proves the view moves rather than only that the buttons are present.</p>
 
       <h2 id="method">How it was measured</h2>
       <p>Three separate checks run against a real browser rather than against markup in
@@ -166,14 +170,6 @@
         English.</p>
 
       <h2 id="barriers">Known barriers</h2>
-
-      <h3>Panning the evidence viewer needs a drag (2.5.7, level AA)</h3>
-      <p>The evidence viewer pans by holding a pointer and dragging. Zoom and rotation have
-        keyboard controls; panning does not have a single-pointer alternative. Somebody who
-        cannot hold and drag accurately cannot move around a magnified image.</p>
-      <p>This fails 2.5.7 Dragging Movements. Dragging is not essential here, so the exception
-        does not apply. The fix is directional controls that move the viewport by a step on
-        each activation, and it is not built.</p>
 
       <h3>Sticky elements in the workspace may obscure focus (2.4.11, level AA)</h3>
       <p>Workspace register tables keep a sticky column header so the column names stay visible
