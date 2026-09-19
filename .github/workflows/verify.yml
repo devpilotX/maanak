@@ -2,6 +2,14 @@ name: verify
 
 # Every required job must pass. Nothing here is marked continue-on-error: a failing
 # check fails the run rather than being reported as advisory.
+#
+# Action versions are the lowest major that runs on Node 24, not the newest tag, so the
+# runtime moves without the behaviour moving with it. GitHub began removing Node 20 from
+# hosted runners in September 2026, which would have stopped the supply-chain job and with
+# it the secret scan. Checked against action.yml on each major tag before choosing:
+# upload-artifact v5 still resolves to node20 so v6 is the minimum; setup-python v7 removes
+# the pip-install input and drops EOL Python versions; upload-artifact v7 switches to direct
+# uploads. None of those changes is wanted here. gitleaks v3 is a pure runtime migration.
 
 on:
   push:
@@ -26,9 +34,9 @@ jobs:
     name: format, lint and types
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -57,9 +65,9 @@ jobs:
     name: unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -80,7 +88,7 @@ jobs:
           python -m pytest tests -m "not integration and not browser" \
             --cov=app --cov-report=term-missing --cov-report=xml -q
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: coverage
           path: api/coverage.xml
@@ -89,9 +97,9 @@ jobs:
     name: prose, bindings, permissions and messages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -137,9 +145,9 @@ jobs:
           --health-cmd "pg_isready -U maanak -d maanak"
           --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -187,7 +195,7 @@ jobs:
     name: live-stack suites
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Write environment file
         run: |
@@ -293,7 +301,7 @@ jobs:
     name: dependency, secret and container scans
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # gitleaks scans the range of commits a push introduced, so it needs their
           # parents. The default shallow clone fetches only the tip, and a push of more
@@ -302,7 +310,7 @@ jobs:
           # clean scan, and gitleaks is right to exit non-zero, so give it the history.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -320,13 +328,13 @@ jobs:
           # passing it failed the job with "unrecognized arguments".
           cyclonedx-py requirements requirements.lock.txt -o ../sbom.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: sbom
           path: sbom.json
 
       - name: Secret scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -349,7 +357,7 @@ jobs:
     needs: [quality, unit, static-checks, migrations, integration, supply-chain]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build the archive
         run: bash scripts/package.sh
@@ -357,7 +365,7 @@ jobs:
       - name: Verify the archive extracts and is complete
         run: bash scripts/verify_package.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: maanak-release
           path: |
