@@ -23,6 +23,7 @@ from decimal import Decimal
 from typing import Any
 
 from ...domain.enums import DeclarationType, LegalOutcome
+from ...domain.labels import label_for
 from ..extraction import money as money_utils
 from ..extraction import units as unit_utils
 
@@ -174,7 +175,14 @@ def check_declaration_present(payload: CheckInput) -> CheckResult:
         )
 
     if not payload.evidence_complete:
-        missing = ", ".join(payload.missing_faces) if payload.missing_faces else "some faces"
+        # label_for rather than the raw value: the officer was shown
+        # "(principal_display_panel outstanding)", which names the enum member instead of
+        # the panel. The same vocabulary is what the interface renders everywhere else.
+        missing = (
+            ", ".join(label_for(face) for face in payload.missing_faces)
+            if payload.missing_faces
+            else "some faces"
+        )
         return CheckResult(
             outcome=LegalOutcome.ADDITIONAL_EVIDENCE_REQUIRED,
             explanation=(

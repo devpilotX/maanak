@@ -94,7 +94,14 @@ def verify_presence_check() -> None:
         result.outcome is LegalOutcome.ADDITIONAL_EVIDENCE_REQUIRED,
         f"missing with incomplete evidence asks for more evidence ({result.outcome})",
     )
-    check("back_panel" in result.explanation, "the outstanding face is named in the message")
+    # The face is named in words. This asserted "back_panel" and passed, which is how
+    # "(principal_display_panel outstanding)" reached the inspection screen: the suite
+    # was confirming the leak rather than catching it.
+    check(
+        "Back panel" in result.explanation and "back_panel" not in result.explanation,
+        f"the outstanding face is named in words, not as an enum value "
+        f"({result.explanation[-60:]!r})",
+    )
 
     result = checks.run_check(
         "declaration_present",

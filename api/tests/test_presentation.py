@@ -206,3 +206,39 @@ class TestNoEmDashInSource:
             if path.is_file() and path.suffix in {".js", ".css", ".html"}
         ]
         assert len(web_files) > 30, f"found only {len(web_files)} browser sources"
+
+
+class TestNoRawEnumInFindingText:
+    """A finding explanation is read by an officer and printed on the report.
+
+    The incomplete-evidence branch joined PackageFace values straight into the sentence,
+    so the inspection screen said "(principal_display_panel outstanding)". That names the
+    enum member rather than the panel, and no existing check covered it:
+    check_error_messages.py inspects raise statements, and this is an explanation, not an
+    error. These tests close that gap from both directions.
+    """
+
+    @staticmethod
+    def _explanation(face: str) -> str:
+        from app.services.rules.checks import CheckInput, check_declaration_present
+
+        payload = CheckInput(
+            values={},
+            parameters={"declaration": DeclarationType.NET_QUANTITY.value, "label": "Net quantity"},
+            evidence_complete=False,
+            missing_faces=[face],
+        )
+        return check_declaration_present(payload).explanation
+
+    def test_the_panel_is_named_in_words(self) -> None:
+        face = PackageFace.PRINCIPAL_DISPLAY_PANEL.value
+        explanation = self._explanation(face)
+        assert face not in explanation, "the raw enum value reached the officer: " + explanation
+        assert labels.label_for(face) in explanation
+
+    @pytest.mark.parametrize("face", [f.value for f in PackageFace if "_" in f.value])
+    def test_no_face_value_appears_raw(self, face: str) -> None:
+        """Every multi-word face, not only the one that was found broken."""
+        explanation = self._explanation(face)
+        assert face not in explanation, f"{face} reached the officer verbatim"
+        assert labels.label_for(face) in explanation

@@ -28,6 +28,7 @@ from ...domain.enums import (
     ReviewState,
     RuleStatus,
 )
+from ...domain.labels import label_for
 from ...models.finding import DeclarationCandidate, Finding
 from ...models.inspection import Inspection, InspectionFace
 from ...models.product import Product
@@ -238,7 +239,8 @@ async def evaluate_inspection(
         )
     if check_input.missing_faces:
         result.notes.append(
-            "Required package faces outstanding: " + ", ".join(check_input.missing_faces)
+            "Required package faces outstanding: "
+            + ", ".join(label_for(face) for face in check_input.missing_faces)
         )
 
     # Supersede the previous run's findings.
