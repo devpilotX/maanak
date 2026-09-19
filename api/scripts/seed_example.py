@@ -36,6 +36,10 @@ BASE_URL = os.environ.get("API_URL", "http://api:8000")
 PASSWORD = os.environ.get("DEMO_PASSWORD", "Ganga-Yamuna-2026")
 DOMAIN = os.environ.get("DEMO_EMAIL_DOMAIN", "example.org")
 
+#: A healthy run confirms eleven readings from the generated panel. Below this the
+#: example is not worth seeding, because the case and notice never get created.
+MINIMUM_CONFIRMED = 8
+
 CONSUMER_EMAIL = f"consumer.sample@{DOMAIN}"
 
 
@@ -97,6 +101,14 @@ def submit_complaint(client: httpx.Client) -> str | None:
 
 
 def wait_for_jobs(client: httpx.Client, job_ids: list[str]) -> bool:
+    if not job_ids:
+        # An empty list used to fall straight through the loop and return True, so the
+        # seeder stopped waiting for an analysis that had never been queued, read the
+        # candidates before the worker had written any, confirmed almost none of them,
+        # and then could not open a case because no rule had produced an adverse
+        # finding. Waiting for nothing is not success.
+        print("  no analysis job was queued for the evidence, so there is nothing to wait for")
+        return False
     for job_id in job_ids:
         for _ in range(90):
             time.sleep(2)
@@ -190,6 +202,17 @@ def main() -> int:
             if response.status_code == 200:
                 confirmed += 1
         step(f"{confirmed} machine readings confirmed by the inspector")
+        # The panel carries ten declarations and a reliable run confirms eleven readings.
+        # Far fewer means the evidence was read badly, and the run would go on to issue a
+        # report with nothing adverse in it, fail to open a case, and leave a workspace
+        # whose case and notice screens have no record to open. Stop here and say so
+        # rather than producing a half-seeded workspace that looks finished.
+        if confirmed < MINIMUM_CONFIRMED:
+            return fail(
+                f"only {confirmed} of the expected {MINIMUM_CONFIRMED} readings were "
+                "confirmed, so the example would be incomplete. Re-run after checking "
+                "that the worker is healthy."
+            )
 
         checks = officer.post(f"/api/v1/inspections/{inspection_id}/checks", headers=headers)
         if checks.status_code != 200:
