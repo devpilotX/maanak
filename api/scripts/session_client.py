@@ -27,6 +27,9 @@ REFRESH_PATH = "/api/v1/auth/refresh"
 #: very thing the caller is testing.
 NO_RETRY = ("/auth/sign-in", "/auth/refresh", "/auth/sign-out", "/auth/bootstrap")
 
+#: Methods that carry no CSRF requirement, matching app/deps.py.
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+
 
 class RefreshingClient(httpx.Client):
     """Retries a request once after renewing the session, mirroring the browser."""
@@ -51,6 +54,21 @@ class RefreshingClient(httpx.Client):
             self._renewing = False
 
     def request(self, method: str, url: Any, **kwargs: Any) -> httpx.Response:
+        # Read the CSRF cookie now rather than trusting what the caller passed.
+        # web/js/api.js reads document.cookie on every unsafe request, and this client
+        # claims to mirror it. It did not: a caller that captured csrf(client) once and
+        # reused the dict kept sending the old token after a refresh rotated the cookie,
+        # and the server answered 403 csrf_token_invalid. Because that is a 403 and not
+        # a 401, the retry below never fired, so the suite reported a permission failure
+        # where it expected a conflict. It surfaced about one run in six, always after a
+        # refresh landed mid-flow, which is what a clock-driven problem looks like.
+        if method.upper() not in SAFE_METHODS and not self._renewing:
+            token = self.cookies.get("maanak_csrf")
+            if token:
+                headers = dict(kwargs.get("headers") or {})
+                headers["X-CSRF-Token"] = token
+                kwargs["headers"] = headers
+
         response = super().request(method, url, **kwargs)
         if response.status_code != 401 or self._renewing:
             return response
