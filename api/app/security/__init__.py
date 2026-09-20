@@ -9,6 +9,7 @@ from .permissions import (
     normalise_jurisdiction,
     permission_matrix,
     permissions_for,
+    phrase_for,
     require_permission,
 )
 from .tokens import (
@@ -44,6 +45,7 @@ __all__ = [
     "normalise_jurisdiction",
     "permission_matrix",
     "permissions_for",
+    "phrase_for",
     "require_permission",
     "verify_password",
 ]
