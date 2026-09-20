@@ -3,9 +3,9 @@
 *.env.local
 backup/
 
-# Agent configuration. Not part of Maanak: nothing under api/, web/, docs/ or scripts/
-# reads it and it is not in the release archive. .kiro/settings/mcp.json also holds a
-# personal access token in plain text, so the whole directory stays local.
+# Local editor and assistant configuration. Not part of Maanak: nothing under api/, web/,
+# docs/ or scripts/ reads it, and it is not in the release archive. It can also hold
+# machine-local credentials, so the whole directory stays out of the repository.
 .kiro/
 
 # Release output
@@ -49,7 +49,15 @@ test_output.txt
 full_test.txt
 sbom.json
 
-# Generated reports and personal preparation notes. Local deliverables, not project source.
+# Generated deliverables and personal preparation notes. Local output, not project
+# source: the presentation template belongs to the hackathon organiser, the deck and the
+# Word report are rebuilt from docs/ when they are needed, and none of the three is read
+# by anything under api/, web/ or scripts/. docs/PROJECT_REPORT.md is the committed form
+# of the report, because markdown is what the rest of docs/ is written in and the prose
+# gate can read it.
 docs/*.docx
+docs/*.pptx
+docs/*.pdf
 hackathon-*.md
 hackathon-*.docx
+finaltouch.md

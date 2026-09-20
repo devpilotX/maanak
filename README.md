@@ -291,12 +291,12 @@ Measured on the current tree:
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 14 documents, 30,662 words |
-| pytest | 186 unit items, 5 live-stack items |
-| `quality.sh` | 138 files formatted, lint clean, mypy clean on 88 files |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 15 documents, 34,476 words |
+| pytest | 321 unit items, 5 live-stack items |
+| `quality.sh` | 139 files formatted, lint clean, mypy clean on 88 files |
 | `verify_package.sh` | 39 checks on the release archive |
 | `verify_restore.py` | 11 checks on a restored deployment: the audit chain recomputes and its head matches what the backup recorded, the append-only trigger survived, and every stored object still matches its hash |
-| `measure_load.py` | Reads peak at 111 requests per second at 4 threads, p50 35 ms and p95 56 ms; beyond that throughput is flat and latency doubles. The worker drains 18 OCR jobs a minute at 3.3 seconds each, bounded by `max_jobs = 2`. One machine, not a benchmark |
+| `measure_load.py` | Reads peak at 156 requests per second at 2 threads, p50 14 ms and p95 19 ms; beyond that throughput is flat and latency climbs to p50 129 ms at 16 threads. The worker drains 17 OCR jobs a minute at 3.6 seconds each, bounded by `max_jobs = 2`. One machine, not a benchmark, and the figure moves with whatever else that machine is doing |
 
 Two of those exist because the standard tooling does not cover them. `measure_a11y.py`
 measures WCAG 2.2 success criterion 2.5.8, for which axe-core has no rule, and enumerates
@@ -357,6 +357,7 @@ Some invariants worth knowing:
 
 | Document | Contents |
 | --- | --- |
+| [PROJECT_REPORT.md](docs/PROJECT_REPORT.md) | The whole project in one document: problem, design, what was measured, what is missing |
 | [RUNNING.md](docs/RUNNING.md) | Running it on localhost from a clean machine, with every command |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, data flow, why each technology |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Clean install, environment, operations, troubleshooting |
