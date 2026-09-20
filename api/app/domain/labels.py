@@ -69,3 +69,22 @@ def options(enum_class: type[StrEnum]) -> list[dict[str, str]]:
 def options_for(values: tuple[str, ...]) -> list[dict[str, str]]:
     """The same shape for an explicit subset of values, such as the decided states."""
     return [{"value": value, "label": label_for(value)} for value in values]
+
+
+def product_label(brand: str | None, name: str | None) -> str:
+    """Brand and product name on one line, without repeating a brand already in the name.
+
+    Most Indian packs are named with the brand in front, so joining the two columns
+    unconditionally printed "Riverside Riverside Iodised Salt 1 kg" on the reports
+    register. A reader takes that for a defect in the record rather than in the label.
+
+    ``productLabel`` in ``web/js/util.js`` applies the same rule for values the browser
+    composes itself, and ``tests/test_presentation.py`` holds the two to the same cases.
+    """
+    brand_text = (brand or "").strip()
+    name_text = (name or "").strip()
+    if not name_text:
+        return brand_text
+    if not brand_text or name_text.casefold().startswith(brand_text.casefold()):
+        return name_text
+    return f"{brand_text} {name_text}"

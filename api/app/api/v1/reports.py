@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload
 from ...db import get_db
 from ...deps import Principal, public_audit_context, requires
 from ...domain.enums import InspectionState
+from ...domain.labels import product_label
 from ...errors import NotFoundError, ValidationError
 from ...models.report import Report
 from ...schemas.common import Page, PageNumber, PageSize
@@ -39,7 +40,7 @@ def _summary(report: Report) -> dict[str, Any]:
         "state": report.state,
         "inspection_id": str(report.inspection_id),
         "inspection_reference": inspection.get("reference"),
-        "product": f"{product.get('brand', '')} {product.get('name', '')}".strip(),
+        "product": product_label(product.get("brand"), product.get("name")),
         "decision": inspection.get("decision"),
         "jurisdiction_code": report.jurisdiction_code,
         "issued_at": report.issued_at,

@@ -28,6 +28,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..domain.enums import PackageType, QuantityKind, values
+from ..domain.labels import product_label
 from .base import Base, TimestampMixin, enum_check, uuid_pk, version_column
 
 
@@ -95,7 +96,7 @@ class Product(Base, TimestampMixin):
 
     @property
     def display_name(self) -> str:
-        return f"{self.brand} {self.name}".strip()
+        return product_label(self.brand, self.name)
 
 
 class ProductIdentifier(Base, TimestampMixin):

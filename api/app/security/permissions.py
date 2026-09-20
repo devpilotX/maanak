@@ -222,10 +222,99 @@ def has_permission(role: Role | str, permission: Permission) -> bool:
     return permission in permissions_for(role)
 
 
+#: The object of the sentence, per permission subject.
+_SUBJECTS: dict[str, str] = {
+    "audit": "the audit trail",
+    "candidate": "a machine reading",
+    "case": "a case",
+    "checks": "the compliance checks",
+    "complaint": "a consumer report",
+    "dashboard": "the overview",
+    "evidence": "evidence",
+    "export": "an export",
+    "finding": "a finding",
+    "inspection": "an inspection",
+    "listing": "an e-commerce listing",
+    "notice": "a notice",
+    "product": "a product record",
+    "report": "a report",
+    "rule": "a rule version",
+    "session": "a session",
+    "tools": "the officer tools",
+    "user": "an officer account",
+}
+
+#: The verb, per permission action.
+_ACTIONS: dict[str, str] = {
+    "activate": "activating",
+    "approve": "approving",
+    "archive": "archiving",
+    "assign": "assigning",
+    "close": "closing",
+    "convert": "converting",
+    "create": "creating",
+    "deactivate": "deactivating",
+    "decide": "recording a decision on",
+    "download": "downloading",
+    "download_original": "downloading the original of",
+    "fetch": "fetching",
+    "issue": "issuing",
+    "merge": "merging",
+    "override": "overriding",
+    "read": "reading",
+    "reanalyse": "reanalysing",
+    "reset_password": "resetting the password of",
+    "resolve": "resolving",
+    "review": "reviewing",
+    "revoke_any": "revoking",
+    "run": "running",
+    "simulate": "simulating",
+    "submit": "submitting",
+    "transition": "moving",
+    "triage": "triaging",
+    "update": "changing",
+    "upload": "uploading",
+    "use": "using",
+    "verify": "verifying",
+    "withdraw": "withdrawing",
+}
+
+#: Permissions whose composed phrase reads badly, or loses something the value carried.
+_PHRASES: dict[str, str] = {
+    "evidence.download_original": "downloading original evidence",
+    "product.merge": "merging product records",
+    "session.revoke_any": "signing another officer out",
+}
+
+
+def phrase_for(permission: Permission | str) -> str:
+    """What a permission allows, in the words an officer reads.
+
+    The denial message used to interpolate the raw value, so an officer who opened a
+    screen their role does not cover was told "Your role does not permit audit.read".
+    A dotted identifier in a sentence is the same defect as a column name in one, and
+    nothing else in this codebase shows one to a reader.
+
+    Composed from the subject and the action, so adding a permission needs no edit here
+    unless its phrase is one of the three exceptions. Anything that does not resolve
+    falls back to the wording of the generic denial rather than to the raw value, and
+    ``tests/test_presentation.py`` asserts every member resolves without the fallback.
+    """
+    value = permission.value if isinstance(permission, Permission) else str(permission)
+    if value in _PHRASES:
+        return _PHRASES[value]
+    subject, _, action = value.partition(".")
+    verb = _ACTIONS.get(action)
+    noun = _SUBJECTS.get(subject)
+    if not verb or not noun:
+        return "this action"
+    return f"{verb} {noun}"
+
+
 def require_permission(role: Role | str, permission: Permission) -> None:
     if not has_permission(role, permission):
         raise PermissionDeniedError(
-            f"Your role does not permit {permission.value}.",
+            f"Your role does not permit {phrase_for(permission)}.",
             details={"required_permission": permission.value, "role": str(role)},
         )
 

@@ -104,7 +104,18 @@ async function wireSecondFactor() {
   const enrol = $('#mfa-enrol-form');
   const remove = $('#mfa-remove-form');
 
-  $('#mfa-cancel').addEventListener('click', () => { enrol.hidden = true; enrolSecret = null; renderMfaState(); });
+  // Whichever way enrolment ends, the code and the typeable secret come off the page.
+  // Hiding the form alone left a scannable secret in the document for the rest of the
+  // session, which is longer than the seconds it is wanted for.
+  const endEnrolment = () => {
+    enrol.hidden = true;
+    enrolSecret = null;
+    clear($('#mfa-qr-holder'));
+    $('#mfa-secret').textContent = '';
+    $('#mfa-code').value = '';
+  };
+
+  $('#mfa-cancel').addEventListener('click', () => { endEnrolment(); renderMfaState(); });
   $('#mfa-remove-cancel').addEventListener('click', () => { remove.hidden = true; renderMfaState(); });
 
   enrol.addEventListener('submit', async (e) => {
@@ -112,9 +123,7 @@ async function wireSecondFactor() {
     clearFieldErrors(enrol);
     try {
       await api.post('/auth/mfa/confirm', { code: $('#mfa-code').value.trim() });
-      enrol.hidden = true;
-      enrolSecret = null;
-      $('#mfa-code').value = '';
+      endEnrolment();
       setStatus($('#mfa-status'), 'A second factor is now required to sign in.', 'ok');
       await renderMfaState();
     } catch (err) {
@@ -176,11 +185,19 @@ async function beginEnrolment() {
   try {
     const started = await api.post('/auth/mfa/begin', {});
     enrolSecret = started.secret;
-    const qr = $('#mfa-qr');
-    // A data URI: the secret must not be written to object storage, and it is only needed
-    // for the seconds the officer spends scanning it.
-    qr.src = `data:image/png;base64,${started.qr_png_base64}`;
-    qr.hidden = false;
+    const holder = $('#mfa-qr-holder');
+    clear(holder);
+    // Built here rather than sitting in the markup: an img element must carry a src, and
+    // one without it is reported by a browser as an image that failed to load. A data URI
+    // keeps the secret out of object storage, and it is wanted only for the seconds the
+    // officer spends scanning it.
+    holder.appendChild(el('img', {
+      id: 'mfa-qr',
+      src: `data:image/png;base64,${started.qr_png_base64}`,
+      alt: 'Enrolment code for an authenticator application',
+      width: '200',
+      height: '200',
+    }));
     $('#mfa-secret').textContent = started.secret;
     $('#mfa-enrol-form').hidden = false;
     $('#mfa-code').focus();
