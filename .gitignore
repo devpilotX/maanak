@@ -41,6 +41,10 @@ _*.sh
 _*.py
 _*.txt
 _*.md
+# Local verification tooling and the Open Food Facts corpus it measures against. Kept out
+# of /tmp so a reboot does not lose it, and out of the repository because it is 7 MB of
+# other people's photographs and a runner that hardcodes local paths.
+_tools/
 test_output.txt
 full_test.txt
 sbom.json
