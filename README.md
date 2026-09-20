@@ -284,10 +284,10 @@ Measured on the current tree:
 | `verify_browser.py` | 60 checks, 0 axe violations on 8 pages |
 | `verify_officer_flow.py` | 44 checks: the whole officer workflow driven through the interface, from opening an inspection to opening a case |
 | `audit_app.py` | 140 checks: every page, all 14 workspace screens scanned with axe, 0 violations; every register shows real rows; the evidence viewer pans without a drag for 2.5.7, proved by reading the scroll position either side of a click; no sideways scroll at 320, 360, 390 or 820 pixels |
-| `check_api_reach.py` | 92 API operations: 68 reached from a screen, 24 recorded with a reason, 0 unexplained |
+| `check_api_reach.py` | 98 API operations: 74 reached from a screen, 24 recorded with a reason, 0 unexplained |
 | `check_permission_names.py` | 33 permission names used by the interface, 0 that do not exist |
 | `check_js_bindings.py` | 27 modules, 0 using a helper they never imported |
-| `check_error_messages.py` | 164 error messages, 0 naming a JSON key or a column |
+| `check_error_messages.py` | 177 error messages, 0 naming a JSON key or a column |
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
