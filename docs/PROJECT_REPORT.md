@@ -267,15 +267,20 @@ run on the current tree.
 
 | Suite | Result |
 | --- | --- |
-| `verify_browser.py` | 60 checks, 0 accessibility violations on 8 pages |
+| `verify_browser.py` | 60 checks, 0 serious or critical accessibility violations on 8 pages |
 | `audit_app.py` | 140 checks: every page, all 14 workspace screens scanned, 0 violations, every register showing real rows, and no sideways scroll at 320, 360, 390 or 820 pixels |
 | `verify_officer_flow.py` | 44 checks: the whole officer workflow driven through the interface, from opening an inspection to opening a case |
 | `measure_a11y.py` | 0 violations across 14 public pages at WCAG 2.0, 2.1 and 2.2 level A and AA; 0 targets under 24 by 24; 0 sticky or fixed elements |
 | `check_links.py` | 0 broken links, 76 in-page anchors land on something |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 widths |
 | `check_workspace_chrome.py` | 14 screens: one header, one footer, the standing note present |
-| per-role navigation | 5 roles, 0 mismatches: 9, 9, 7, 7 and 4 links visible |
-| second-factor panels | 25 of 25 checks, with each panel driven visible first because a scanner ignores hidden content |
+
+Two further checks were run with tooling kept outside the repository, because it hardcodes
+local paths and is not something a reader can run unchanged. They are reported here as
+what they are rather than left out. Per-role navigation: 5 roles, 0 mismatches, with 9, 9,
+7, 7 and 4 links visible. The second-factor panels: 25 of 25 checks, with each panel driven
+visible first, because a scanner ignores hidden content and a scan of the page as loaded
+would have said nothing about them.
 
 ### The words a reader sees
 

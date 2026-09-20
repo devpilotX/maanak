@@ -291,7 +291,7 @@ Measured on the current tree:
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 15 documents, 34,476 words |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 15 documents, 34,532 words |
 | pytest | 321 unit items, 5 live-stack items |
 | `quality.sh` | 139 files formatted, lint clean, mypy clean on 88 files |
 | `verify_package.sh` | 39 checks on the release archive |
