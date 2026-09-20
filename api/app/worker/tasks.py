@@ -42,7 +42,7 @@ from ..services.audit import record as audit_record
 from ..services.canonical import json_safe
 from ..services.extraction import confusables
 from ..services.extraction import pipeline as extraction_pipeline
-from ..services.ocr import read_barcodes, read_with_best_profile, run_ocr
+from ..services.ocr import read_barcodes, read_with_best_profile
 
 logger = get_logger(__name__)
 
@@ -193,8 +193,14 @@ async def _run_analysis(job_id: uuid.UUID, evidence_id: uuid.UUID) -> dict[str, 
                 existing.transform = json_safe(applied)
         await jobs.update_progress(db, job_id, progress=35, stage="reading text")
 
-    # 3. OCR on the prepared image. Several language configurations are tried and the
-    #    one that reads best is kept; see ocr.read_with_best_profile.
+    # 3. OCR on the prepared image. Several language configurations are tried, and a sparse
+    #    segmentation pass is added when the plain read comes back thin; the one that reads
+    #    best is kept. See ocr.read_with_best_profile, which now owns that escalation.
+    #
+    #    It used to be duplicated here, with its own threshold of 8 words and its own rule of
+    #    keeping whichever read returned more words. Both were wrong. 8 words missed a pack
+    #    that returned 15 and went from 0 declarations to 4 under sparse, and "more words" is
+    #    not "read better": a noisy segmentation returns dozens of fragments and wins.
     ocr_image = imaging.decode_image(ocr_bytes)
     outcome = read_with_best_profile(
         ocr_image.pillow,
@@ -202,12 +208,6 @@ async def _run_analysis(job_id: uuid.UUID, evidence_id: uuid.UUID) -> dict[str, 
         correct_orientation=True,
         min_word_confidence=settings.ocr_min_word_confidence,
     )
-
-    # A panel with scattered text sometimes reads better with sparse segmentation.
-    if outcome.succeeded and outcome.word_count < 8:
-        alternative = run_ocr(ocr_image.pillow, profile_name="sparse", correct_orientation=False)
-        if alternative.word_count > outcome.word_count:
-            outcome = alternative
 
     async with session_scope() as db:
         await jobs.update_progress(db, job_id, progress=60, stage="reading barcodes")
