@@ -119,7 +119,7 @@ closed, so repeated runs from one container would otherwise start returning 429.
 | `check_js_bindings.py` | 27 modules | nothing | No module uses a helper it never imported. A missing import throws only when the line runs, so one referenced in a rarely-taken branch can sit broken indefinitely |
 | `check_permission_names.py` | 25 names | nothing | Every permission the interface asks for exists. A name that does not exist is never held, so the control it guards is hidden from everyone with no error anywhere |
 | `check_error_messages.py` | 164 messages | nothing | No error an officer reads names a JSON key or a database column |
-| `check_api_reach.py` | 92 operations | API | Every endpoint is either reached from a screen or recorded, with a reason, as deliberately not reached |
+| `check_api_reach.py` | 98 operations | API | Every endpoint is either reached from a screen or recorded, with a reason, as deliberately not reached |
 
 Total: **510 assertions** across the eight verification suites, plus **142 pytest items**
 in the fast set (which includes three of the suites, since they need no services).
