@@ -291,7 +291,7 @@ Measured on the current tree:
 | `measure_a11y.py` | 0 axe violations across 14 public pages at WCAG 2.0/2.1/2.2 A and AA; 0 targets under 24×24; 0 sticky or fixed elements |
 | `scan_tints.py` | 0 warm-tinted surfaces across 24 pages at 3 breakpoints |
 | `check_links.py` | 0 broken links, 76 in-page anchors resolve |
-| `check_prose.py` | 0 machine-writing tells across 28 pages and 15 documents, 39,589 words |
+| `check_prose.py` | 0 machine-writing tells across 28 pages and 16 documents, 41,534 words |
 | pytest | 321 unit items, 5 live-stack items |
 | `quality.sh` | 139 files formatted, lint clean, mypy clean on 88 files |
 | `verify_package.sh` | 39 checks on the release archive |
@@ -370,6 +370,7 @@ Some invariants worth knowing:
 | [TESTING.md](docs/TESTING.md) | How to run every check and what each proves |
 | [BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md) | Backup, restore, integrity re-verification |
 | [DEMO.md](docs/DEMO.md) | The connected walkthrough, in order |
+| [DEMO_SETUP.md](docs/DEMO_SETUP.md) | Building the demonstration workspace, including the before and after review comparison |
 | [KNOWN_LIMITS.md](docs/KNOWN_LIMITS.md) | What this does not do, and what is unproven |
 
 ---
