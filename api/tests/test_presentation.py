@@ -7,6 +7,7 @@ the arithmetic and much easier to leave wrong.
 from __future__ import annotations
 
 import re
+from itertools import pairwise
 from pathlib import Path
 from typing import ClassVar
 
@@ -21,6 +22,7 @@ from app.domain.enums import (
     PackageFace,
     Role,
 )
+from app.security import Permission, phrase_for
 from app.services.phrasing import counted, plural, verb
 
 # tests/ sits inside api/, so one level up is the api tree and two is the repository
@@ -242,3 +244,114 @@ class TestNoRawEnumInFindingText:
         explanation = self._explanation(face)
         assert face not in explanation, f"{face} reached the officer verbatim"
         assert labels.label_for(face) in explanation
+
+
+class TestProductLabel:
+    """Brand and product name on one line.
+
+    Joining the two columns unconditionally printed "Riverside Riverside Iodised Salt
+    1 kg" on the reports register, because most packs are named with the brand in front.
+    The browser had already been fixed; the API had two copies that had not.
+    """
+
+    @pytest.mark.parametrize(
+        ("brand", "name", "expected"),
+        [
+            # The case that was found broken.
+            ("Riverside", "Riverside Iodised Salt 1 kg", "Riverside Iodised Salt 1 kg"),
+            # Capitalisation must not defeat the comparison.
+            ("riverside", "Riverside Iodised Salt 1 kg", "Riverside Iodised Salt 1 kg"),
+            ("RIVERSIDE", "Riverside Iodised Salt", "Riverside Iodised Salt"),
+            # A brand that is genuinely absent from the name is still prefixed.
+            ("Riverside", "Iodised Salt 1 kg", "Riverside Iodised Salt 1 kg"),
+            # A brand that merely shares an opening word is not a prefix of the name.
+            ("Riverside Foods", "Riverside Iodised Salt", "Riverside Foods Riverside Iodised Salt"),
+            # Either side missing, and both.
+            ("Riverside", "", "Riverside"),
+            ("", "Iodised Salt", "Iodised Salt"),
+            (None, "Iodised Salt", "Iodised Salt"),
+            ("Riverside", None, "Riverside"),
+            (None, None, ""),
+            # Surrounding space is not a difference a reader should see.
+            ("  Riverside  ", "  Riverside Iodised Salt  ", "Riverside Iodised Salt"),
+        ],
+    )
+    def test_the_brand_is_never_repeated(
+        self, brand: str | None, name: str | None, expected: str
+    ) -> None:
+        assert labels.product_label(brand, name) == expected
+
+    def test_no_result_opens_with_a_doubled_word(self) -> None:
+        """The property, rather than the cases: whatever comes out reads once."""
+        for brand, name in (
+            ("Riverside", "Riverside Iodised Salt 1 kg"),
+            ("Testbrand", "Testbrand Test Iodised Salt 1 kg"),
+            ("Tata", "Tata Salt"),
+        ):
+            words = labels.product_label(brand, name).split()
+            doubled = [a for a, b in pairwise(words) if a.casefold() == b.casefold()]
+            assert not doubled, f"{brand} + {name} produced a doubled word: {doubled}"
+
+
+@pytest.mark.skipif(not WEB_REACHABLE, reason=MOUNT_HINT)
+class TestProductLabelParity:
+    """web/js/util.js composes the same label for values the browser builds itself.
+
+    Two implementations of one rule is acceptable only while something checks that they
+    agree, so the guard the browser applies is asserted to be present rather than taken
+    on trust.
+    """
+
+    def test_the_browser_applies_the_same_prefix_guard(self) -> None:
+        source = WEB_UTIL.read_text(encoding="utf-8")
+        block = re.search(r"export function productLabel\(p\) \{(.*?)\n\}", source, re.DOTALL)
+        assert block, "productLabel not found in web/js/util.js"
+        body = block.group(1)
+        assert "startsWith" in body, "the browser no longer guards against a repeated brand"
+        assert "toLowerCase" in body, "the browser's comparison is case sensitive again"
+
+
+class TestPermissionPhrasing:
+    """A denial message is read by an officer, not by a developer.
+
+    It interpolated the raw permission, so a reviewer who opened the audit screen was
+    told "Your role does not permit audit.read". check_error_messages.py could not catch
+    it: the value arrives at runtime, so the source holds no dotted token to find.
+    """
+
+    @pytest.mark.parametrize("permission", list(Permission))
+    def test_every_permission_has_a_phrase(self, permission: Permission) -> None:
+        phrase = phrase_for(permission)
+        assert phrase != "this action", (
+            f"{permission.value} has no phrase, so its denial falls back to the generic "
+            "wording. Add its subject or action in app/security/permissions.py."
+        )
+
+    @pytest.mark.parametrize("permission", list(Permission))
+    def test_no_machine_identifier_reaches_the_officer(self, permission: Permission) -> None:
+        message = f"Your role does not permit {phrase_for(permission)}."
+        assert "." not in message[:-1], f"a dotted identifier survived: {message}"
+        assert "_" not in message, f"an underscored identifier survived: {message}"
+        assert permission.value not in message
+
+    def test_the_message_reads_as_a_sentence(self) -> None:
+        assert (
+            f"Your role does not permit {phrase_for(Permission.AUDIT_READ)}."
+            == "Your role does not permit reading the audit trail."
+        )
+
+    def test_the_denial_raised_by_the_guard_carries_the_phrase(self) -> None:
+        from app.errors import PermissionDeniedError
+        from app.security.permissions import require_permission
+
+        with pytest.raises(PermissionDeniedError) as raised:
+            require_permission(Role.REVIEWER, Permission.AUDIT_READ)
+        assert "reading the audit trail" in str(raised.value)
+        # The machine name stays available to a caller, just not in the sentence.
+        assert raised.value.details == {
+            "required_permission": "audit.read",
+            "role": "reviewer",
+        }
+
+    def test_an_unknown_permission_falls_back_rather_than_leaking(self) -> None:
+        assert phrase_for("nonesuch.frobnicate") == "this action"
