@@ -97,19 +97,22 @@ closed, so repeated runs from one container would otherwise start returning 429.
 | `verify_security.py` | 51 | nothing | Argon2id hashing and salting; timing equalisation for unknown accounts; password policy; token signing, tampering rejection and key rotation; opaque refresh tokens stored only as hashes; the full permission matrix; hierarchical jurisdiction scope including prefix-confusion rejection |
 | `verify_extraction.py` | 62 | nothing | Quantity parsing and exact unit conversion; Devanagari digits; multipiece totals; price parsing with Indian digit grouping; half-up rounding to paise; date precision and preserved ambiguity; declaration detection with image regions |
 | `verify_rules.py` | 71 | nothing | Absent evidence never becomes a violation; unit-price arithmetic with recorded steps; character height refuses to guess from pixels; quantity band boundaries; effective-date windows; exceptions; only approved versions apply; the simulator gates approval |
-| `verify_auth_flow.py` | 53 | API | Bootstrap is one-time; identical errors for unknown account and wrong password; `HttpOnly` cookies with a path-restricted refresh cookie; CSRF enforcement; refresh rotation; reuse of a rotated token revokes the family; immediate session revocation; mass-assignment rejection |
+| `verify_auth_flow.py` | 70 | API | Bootstrap is one-time; identical errors for unknown account and wrong password; `HttpOnly` cookies with a path-restricted refresh cookie; CSRF enforcement; refresh rotation; reuse of a rotated token revokes the family; immediate session revocation; mass-assignment rejection; the second factor against the RFC 6238 vectors |
 | `verify_pipeline.py` | 56 | API, worker, storage | A blurred, glared image is refused with specific instructions; SHA-256 matches the uploaded bytes; duplicates and non-images are refused; the worker reports real progress; candidates carry image regions inside the original bounds; raw OCR is retained; the stored file still matches its hash; the downloaded original is byte-identical |
 | `verify_workflow.py` | 117 | full stack | Rule seeding as drafts; approval refused before simulation; the author cannot self-approve; checks before review produce no violations; a correction preserves the machine reading; stale writes are refused; every finding cites an approved rule version; an inspector cannot decide; cross-jurisdiction access returns 404; report snapshot, PDF and DOCX hashes; public verification leaks nothing |
 | `verify_matters.py` | 86 | full stack | A public complaint with no account; the published triage priority; status lookup needs reference *and* contact; conversion to an inspection carrying the consumer's photograph; the controller hierarchy; case opening requires an issued report; a served notice is frozen; the audit chain verifies, and a forged event is detected with its sequence named |
 | `verify_browser.py` | 60 | full stack + Chromium | Zero serious or critical axe violations on eight pages; one `h1` per page; the skip link is the first tab stop; every complaint field is labelled; no horizontal overflow at 320px or 390px; sign-in through the interface; `maanak_access` is `HttpOnly` and `maanak_csrf` is not; registers render real data; an inspector sees a permission message; sign-out and the unauthenticated redirect work |
-| `tests/test_extraction_values.py` | 43 | nothing | The arithmetic a finding rests on, asserted as exact `Decimal` values |
-| `tests/test_domain_units.py` | 51 | nothing | GS1 check digits worked through by hand; permission matrix; jurisdiction isolation; state machine edges, guards and reachability; canonical hashing determinism |
-| `tests/test_presentation.py` | 24 | nothing | Every enum label reads as English rather than as a raw value; the JavaScript override table matches the Python one; counted nouns never fall back to "(s)"; the decision choices offered are exactly the ones the service accepts; no em dash survives in any source file |
+| `tests/test_extraction_values.py` | 42 | nothing | The arithmetic a finding rests on, asserted as exact `Decimal` values |
+| `tests/test_domain_units.py` | 49 | nothing | GS1 check digits worked through by hand; permission matrix; jurisdiction isolation; state machine edges, guards and reachability; canonical hashing determinism |
+| `tests/test_presentation.py` | 166 | nothing | Every enum label reads as English rather than as a raw value; the JavaScript override table matches the Python one; counted nouns never fall back to "(s)"; the decision choices offered are exactly the ones the service accepts; no em dash survives in any source file; brand and product name compose without repeating the brand, in the API and in the browser; every one of the permissions has a phrase an officer can read, so no denial names a dotted identifier |
 | `tests/test_imaging_quality.py` | 23 | nothing | A plain studio backdrop is not counted as glare and not counted again as bright clipping, and a genuine highlight burnt into the panel still blocks. Both directions, because a fix that silenced glare everywhere would be worse than the false positive it replaced. Also the confusable-glyph detector: it flags "lodised" and stays quiet on "Lemon Pickle" |
+| `tests/test_totp.py` | 29 | nothing | The second factor against the RFC 6238 published vectors, the replay window, and the drift tolerance |
+| `tests/test_ocr_profiles.py` | 9 | nothing | The reader's profile escalation picks by measured score, and stops once a profile reads well enough |
+| `tests/test_verification_suites.py` | 3 unit, 5 live-stack, 1 browser | varies | Wraps the suites above so a failure prints the suite's own output, and asserts a minimum count per suite so one cannot silently shrink |
 | `measure_ocr_accuracy.py` | 80 fields | full stack | Ten declarations with known correct values, scored against the extraction output under eight conditions: as generated, scaled to 1200 and 900 wide, rotated 2 and 6 degrees, JPEG quality 55, blurred, and on a white backdrop. 72 of 80 correct. The figure is for generated labels and is not an accuracy figure for photographs |
 | `measure_ocr_real.py` | 14 photographs | full stack + network | Photographs of real Indian packs contributed to Open Food Facts, scored against each product's declared quantity. 6 of 14 yielded at least one declaration, 10 declarations in total, and net quantity was read from none of them. The quality gate refused 5 outright. The result that matters is that **no photograph produced a non-compliant finding before review**. Not a labelled benchmark, and 14 is too few to quote a percentage from |
-| `check_prose.py` | 41 files | nothing | No machine-writing tells across 28 pages and 14 documents: no tool leak markers, no scaffold headings, no participial tails, no copula avoidance, no em dash anywhere |
-| `audit_app.py` | 134 | full stack + Chromium | Every route in the OpenAPI document is declared; all 28 pages load and reach their data; no stringified object or undefined value reaches the screen; the inspection screen passes axe as a reviewer, with the decision form rendered |
+| `check_prose.py` | 43 files | nothing | No machine-writing tells across 28 pages and 15 documents, 34,532 words: no tool leak markers, no scaffold headings, no participial tails, no copula avoidance, no em dash anywhere |
+| `audit_app.py` | 140 | full stack + Chromium | Every route in the OpenAPI document is declared; all 28 pages load and reach their data; no stringified object or undefined value reaches the screen; the inspection screen passes axe as a reviewer, with the decision form rendered |
 | `measure_a11y.py` | 14 pages | Chromium | Zero axe violations at WCAG 2.0, 2.1 and 2.2 level A and AA; zero targets under 24 by 24 CSS pixels, which axe has no rule for; zero sticky or fixed positioning on a public page |
 | `scan_tints.py --app` | 24 pages | Chromium | No warm-tinted surface at any of three breakpoints, across the public site and the workspace |
 | `check_links.py` | 0 broken | Chromium | Every internal link resolves and every in-page anchor has an element to land on |
@@ -117,12 +120,16 @@ closed, so repeated runs from one container would otherwise start returning 429.
 | `check_report_text.py` | 2 documents | full stack | The generated PDF and DOCX contain no em dash, no "(s)" plural, no stringified object and no raw enum value, checked by extracting the text a reader receives |
 | `verify_officer_flow.py` | 44 | full stack + Chromium | The whole officer workflow driven through the interface: open an inspection, have a glared photograph refused with a named reason, upload a readable one, wait for the worker, read the OCR output, confirm eleven readings, run the checks, send for reviewer decision, record the decision, issue the report, open the case |
 | `check_js_bindings.py` | 27 modules | nothing | No module uses a helper it never imported. A missing import throws only when the line runs, so one referenced in a rarely-taken branch can sit broken indefinitely |
-| `check_permission_names.py` | 25 names | nothing | Every permission the interface asks for exists. A name that does not exist is never held, so the control it guards is hidden from everyone with no error anywhere |
-| `check_error_messages.py` | 164 messages | nothing | No error an officer reads names a JSON key or a database column |
+| `check_permission_names.py` | 33 names | nothing | Every permission the interface asks for exists. A name that does not exist is never held, so the control it guards is hidden from everyone with no error anywhere |
+| `check_error_messages.py` | 177 messages | nothing | No error an officer reads names a JSON key or a database column |
 | `check_api_reach.py` | 98 operations | API | Every endpoint is either reached from a screen or recorded, with a reason, as deliberately not reached |
+| `check_demo_logins.py` | 7 accounts | full stack | Every account the README publishes actually signs in, so a walkthrough does not begin with a failed sign-in |
+| `verify_restore.py` | 11 | a restored deployment | The audit chain recomputes and its head sequence, head hash and event count all match what the backup recorded; `audit_events` still refuses `UPDATE`; every evidence object and every other stored object matches the hash recorded at upload; every report snapshot recomputes |
+| `measure_load.py` | a capacity baseline | full stack | Ramps read concurrency and drains a queue of OCR jobs, and counts every 429 rather than hiding it. Figures for one host, not a benchmark |
 
-Total: **510 assertions** across the eight verification suites, plus **142 pytest items**
-in the fast set (which includes three of the suites, since they need no services).
+Total: **527 assertions** across the eight verification suites, plus **321 pytest items**
+in the fast set and **5** more that need the live stack. Every figure in this table was
+read off a run on the current tree, not carried forward.
 
 ## Running one suite
 
@@ -181,12 +188,11 @@ Stated plainly, with the reasoning in `docs/KNOWN_LIMITS.md`:
 - **OCR accuracy.** No labelled corpus of real package photographs was available, so no
   character or word error rate is claimed. The pipeline is proven to work; its field
   accuracy is unmeasured.
-- **Performance under load.** No response-time budget, no concurrency test beyond
-  correctness, no storage-growth projection.
+- **Performance under load.** `measure_load.py` gives a capacity baseline for one host,
+  but there is no response-time budget, no sustained soak test and no storage-growth
+  projection.
 - **Manual screen-reader testing.** axe-core covers what a tool can; it does not cover
   what a NVDA or VoiceOver user experiences.
-- **A full backup and restore drill.** The procedure is documented and the integrity
-  re-verification endpoint exists, but the drill was not executed in this build.
 - **Every route swept for object-level authorisation.** Jurisdiction isolation is proven
   on inspections, complaints, cases, reports and the audit trail; it was not
-  independently probed on all 97 routes.
+  independently probed on all 98 operations.
