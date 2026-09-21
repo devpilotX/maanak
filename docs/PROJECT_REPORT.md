@@ -297,21 +297,31 @@ genuine without the page telling a stranger anything about the case.
 These are the declarations the Legal Metrology rules require on a packet. Maanak looks for
 all eleven.
 
-| What | In plain words |
-| --- | --- |
-| Name and address of the maker or packer | Who to hold responsible |
-| Common or generic name | What the thing actually is, such as "Iodised Salt" |
-| Net quantity | How much is inside, by weight, volume or count |
-| Month and year | When it was made or packed |
-| Retail sale price | The maximum price, marked as inclusive of all taxes |
-| Unit sale price | The price per kilogram or per litre |
-| Consumer care details | A name, phone number or email to complain to |
-| Country of origin | Needed for imported goods |
-| Dimensions, where relevant | For goods sold by size |
-| Batch or code number | So one production run can be traced |
-| Minimum letter height | The print must be big enough to read |
+| What | In plain words | Why a shopper should care |
+| --- | --- | --- |
+| Name and address of the maker or packer | Who to hold responsible | Without it there is nobody to complain to and nobody to prosecute |
+| Common or generic name | What the thing actually is, such as "Iodised Salt" | A brand name alone can hide what you are buying |
+| Net quantity | How much is inside, by weight, volume or count | This is the single most cheated declaration. A packet sold as 1 kg holding 900 g is theft repeated thousands of times |
+| Month and year | When it was made or packed | Old stock sold as new |
+| Retail sale price | The maximum price, marked as including all taxes | Charging above it is the most common complaint the helpline receives |
+| Unit sale price | The price per kilogram or per litre | This is what lets you compare a 235 g packet against a 500 g one. Without it, comparing prices is guesswork |
+| Consumer care details | A name, phone number or email to complain to | A complaint you cannot deliver is not a right |
+| Country of origin | Needed for imported goods | You are entitled to know where a thing came from |
+| Dimensions, where relevant | For goods sold by size | A pipe or a cloth sold short |
+| Batch or code number | So one production run can be traced | When something goes wrong, this is what lets a recall find the right stock |
+| Minimum letter height | The print must be big enough to read | A declaration printed too small to read is the same as not printing it |
 
-That last one is special. See section 8.
+Two of these deserve a closer look, because they are where most of the real harm sits.
+
+**Net quantity and unit sale price work together.** Suppose a packet says 235 g and 28
+rupees. The unit price should be 119 rupees 15 paise per kilogram. If the packet prints
+119 rupees 14 paise, that is a wrong declaration. If it prints nothing at all, that is a
+missing declaration. And if the packet actually holds 200 g rather than 235 g, no photograph
+in the world will tell you, which is why Maanak says plainly that it cannot confirm net
+quantity from a picture, and names the office that can weigh it.
+
+**Minimum letter height is the one Maanak refuses to answer.** Section 8 explains why in
+full. The short version: a photograph cannot give you millimetres.
 
 ---
 
@@ -882,7 +892,268 @@ undone. It checks what a program can check. It cannot check that a lawyer read t
 
 ---
 
-## 20. How we worked
+## 20. What a finished report actually contains
+
+A trader or a judge receiving the output should be able to check it without asking anybody
+for help. Here is what is printed on it.
+
+**The heading.** The report reference, the date it was issued, the officer who issued it, and
+the office they belong to.
+
+**What was inspected.** The product brand and name, the shop or premises, the date of the
+inspection, and the reference of the consumer complaint if it started as one.
+
+**The photograph's fingerprint.** The long code worked out from the image file. Anyone holding
+the original file can work the code out again and see that it matches. The image itself stays
+in the evidence record.
+
+**Every value, twice.** For each of the eleven declarations, the report shows what the machine
+read and what the officer decided. Where the officer corrected something, both values appear,
+with the time and the name. Nothing is quietly replaced.
+
+**Every finding, with its working.** For each rule: the answer, the line of law it is
+attributed to, which version of the rule ran, the values that went in, and the sum that was
+done. If the answer was "cannot tell" or "show me more", the report says which and why.
+
+**The unconfirmed mark.** Printed on the face of the report, because none of the eleven legal
+interpretations has been checked against a gazette notification. A reader is told this without
+having to ask.
+
+**What this is not.** That Maanak is not a government service, that it enforces nothing, and
+that the decision belongs to the named officer.
+
+**The verification block.** The report reference and a short printed code. Type those two into
+the public page and it tells you whether the report was issued and whether it has changed. It
+tells you nothing else, so a trader can prove a notice is genuine without a stranger learning
+anything about the case.
+
+The same report is produced as a PDF and as an editable Word file, both generated from the
+same frozen copy, so the two cannot disagree with each other or with the record.
+
+---
+
+## 21. The stages an inspection passes through
+
+An inspection cannot jump around. It moves through named stages, and every move records who
+did it and when. Software that lets a record go anywhere is software nobody can audit.
+
+| Stage | What it means | Who moves it on |
+| --- | --- | --- |
+| Draft | Created, nothing attached yet | Inspector |
+| Evidence collection | Photographs are being added and graded | Inspector |
+| Reading | The background helper is reading the labels | Nobody. It moves itself |
+| Officer review | Every machine reading is waiting for a person | Inspector |
+| Checks run | The rules have been applied to reviewed values | Inspector |
+| Awaiting decision | Sent to a reviewer | Inspector |
+| Decided | A person has recorded the conclusion | Reviewer |
+| Report issued | The frozen, fingerprinted document exists | Reviewer |
+| Case opened | A formal case has been started from the report | Controller |
+
+Three rules about this list are worth stating on their own.
+
+**You cannot skip review.** The rules will not run on a value nobody has looked at. This is
+enforced inside the rule engine rather than on the screen, so no screen written in future can
+forget it.
+
+**You cannot decide on your own evidence.** An inspector collects and reviews. A reviewer
+decides. The same person is not allowed to do both on one inspection.
+
+**You cannot open a case without a report.** The case has to point at an issued report, and a
+report cannot be edited once issued.
+
+A consumer complaint has a shorter path of its own: submitted, triaged, then either converted
+into an inspection or closed with a reason. When it is converted, the shopper's photograph
+travels across as evidence rather than being taken again, and the complaint keeps its own
+reference so the shopper can still follow it.
+
+---
+
+## 22. What it costs to run
+
+A fair question, and "it depends" is not an answer.
+
+**Software licences: nothing.** Every part is free and open source. Python, FastAPI,
+PostgreSQL, Redis, MinIO, nginx, Tesseract, OpenCV, Pillow and Docker. No licence per officer,
+per office or per district.
+
+**Per packet checked: nothing.** This is the decision that matters most for cost. The label
+reading happens on the office computer. It does not call out to a paid service, so the bill
+does not grow when the number of packets grows. A cloud reading service charging a fraction of
+a rupee per image sounds cheap until a state does two million inspections in a year.
+
+**Hardware: one ordinary computer per office.** All six parts together used about 693 MB of
+memory at the busiest moment, while reading a label. That is a normal desktop machine, not a
+server room.
+
+**Field devices: nothing new.** The officer uses the phone already in his pocket. The camera
+opens inside the web page, so there is no app to buy, distribute, update or support.
+
+**Storage.** Photographs are the only thing that really grows. A declaration panel photograph
+is roughly 200 KB to 2 MB. Ten thousand inspections with two photographs each is somewhere
+between four and forty gigabytes, which is an ordinary disk.
+
+**What does cost money**, and we will not pretend otherwise:
+
+- Somebody's time to confirm all eleven legal interpretations against the gazette.
+- An independent security review.
+- An independent accessibility review, including a real screen reader user.
+- A certificate, and the work to turn on encrypted connections.
+- Whatever the office already spends on people, which does not change.
+
+The honest summary: running it costs close to nothing. Setting it up properly costs expert
+human time rather than software.
+
+---
+
+## 23. How this would grow from one district to a state
+
+The version in this report runs on one computer for one district. Nothing would have to be
+rewritten to serve more, and here is what would actually change.
+
+**Areas of responsibility already work.** District, state and national levels exist in the
+data today, and an officer sees only records inside their own area. A controller sees their
+state. This was built in from the start rather than added later, and the filtering happens
+inside the database question rather than afterwards on the results. That is the difference
+between a real boundary and a cosmetic one.
+
+**Reading is the only part that needs more machines.** Everything else is fast. Serving pages
+runs at about 156 a second on one computer, far more than an office needs. Reading one label
+takes about 3.6 seconds, and we deliberately read only two at a time, because reading uses a
+lot of processor and running more at once on a small machine makes every one slower. To read
+more per minute you add more reading machines. They take work from the same queue, so adding
+one is a setting rather than a code change.
+
+**Rough arithmetic.** One computer clears about 17 labels a minute, so roughly a thousand an
+hour. A district doing two hundred inspections a day with two photographs each needs four
+hundred readings, which is under half an hour of reading spread across a working day. One
+machine per district is generous.
+
+**What we have not tested**, and would want to before promising anything:
+
+- A long soak test running for days rather than minutes.
+- Many districts uploading photographs at the same moment.
+- How the database behaves after several years of records rather than a few hundred.
+- Restoring a backup that is large rather than small.
+
+**One thing that does not scale, on purpose.** The officer review step. Every value is looked
+at by a person. That is the whole design and the reason the record is worth anything. Any plan
+to handle more inspections needs more officers, not fewer.
+
+---
+
+## 24. Choices we made, and what we chose against
+
+Most of these went the less obvious way, and each has a reason.
+
+**One program in clean layers, rather than many small services.** Splitting a system into many
+small pieces is fashionable and solves problems we do not have. It would add network calls,
+more things to deploy and more ways to fail, all to serve one office. We kept one program and
+were strict about its internal layers instead.
+
+**Plain web pages, rather than a modern front-end framework.** No framework, no build step,
+nothing to compile. This lets the pages refuse to load any code from outside, which makes a
+whole family of attacks impossible rather than unlikely. It also means somebody can read the
+page source in five years and still understand it.
+
+**Reading on our own machine, rather than a cloud reading service.** A cloud service would
+read real packets better than Tesseract does. We chose against it for three reasons: the
+photograph is evidence and should not leave the office, the bill would grow with every packet,
+and an office with a poor connection would stop working. We accepted a worse reader to keep
+those three properties.
+
+**Refusing to answer, rather than giving a confident number.** The easy version of this project
+reads a label, applies rules and reports violations. It would demonstrate better. It would also
+produce findings that fall apart the first time a trader brings a lawyer. We chose the version
+that says "I cannot tell".
+
+**Telling the officer about confusable letters, rather than correcting them.** We could add a
+rule turning a leading lowercase l into a capital I, and our reading score would improve. The
+same rule turns "Lemon" into "Iemon". We kept the honest reading and reported the ambiguity.
+
+**Marking all eleven rules unconfirmed, rather than looking finished.** Flipping one flag would
+make the system look complete and authoritative. It would also be a lie, printed on every
+report.
+
+**A clearly labelled development signing key, rather than a real-looking signature.** We could
+have made the reports appear digitally signed. A signature that means nothing is worse than no
+signature, so it stays labelled until somebody connects a real signing service.
+
+**Answering "not found" for another district's record, rather than "not allowed".** Saying "you
+are not allowed to see this" confirms the record exists, which is itself a leak. So the answer
+is the same one you get for a record that does not exist.
+
+**Building a text-region detector and then not shipping it.** We built something to find the
+text areas in a photograph and read each one separately. Measured over fourteen real photos it
+found exactly the same ten values as reading the whole photograph, for twice the reading time.
+Combining both approaches read one net quantity where the simple approach read none. One extra
+value out of fourteen for half the speed is not a trade worth making automatically, so it is
+written down rather than merged.
+
+---
+
+## 25. Questions you may want to ask, with straight answers
+
+**Does it work?** Yes, on one computer, today. One command starts it. The tests are in section
+12 and those numbers came from a real run.
+
+**How accurate is the label reading?** On labels we generate, 72 of 80 values. On real
+photographs taken by shoppers, six of fourteen produced any value at all and the net quantity
+came out of none. That second number is the honest one.
+
+**Then how is this useful?** Because a failed reading does not become a finding. Across all
+fourteen real photographs, the number of faults raised before a person checked was zero. The
+system hands hard cases to a human instead of guessing.
+
+**Is the legal part correct?** Unknown, and marked as unknown. None of the eleven
+interpretations has been checked line by line against a gazette notification. Every rule carries
+an unconfirmed mark and that mark is printed on every report. Closing this needs a lawyer, not
+a programmer.
+
+**Could an officer fake a finding?** He can record a wrong decision, as he can on paper, and his
+name is on it. What he cannot do is change the photograph, remove the machine's original
+reading, edit a report after it is issued, or delete anything from the history. Those are
+blocked by the database itself, not by the software asking nicely.
+
+**Could an administrator cover something up?** No. The history table refuses changes and
+deletions at the database level, and each entry is linked to the one before it, so removing one
+from the middle shows up. We tested this by forging an entry on purpose. The check caught it and
+named the exact entry number that did not add up.
+
+**What happens if the computer dies?** We save a copy of the database, all the files, and the
+last entry of the history with its code. We have run the full drill: saved, wiped, restored,
+then eleven checks confirming the restored copy holds the same history, the same evidence and
+the same reports. What is still missing is scheduling it automatically and keeping the copy on a
+different machine.
+
+**Is it secure?** Partly, and the gaps are listed rather than hidden. Passwords are stored
+properly, sessions use a cookie only, a second factor is available, and an out-of-area record
+answers "not found". There is no encrypted connection in this setup, no virus scanning on
+uploads, no monitoring, and no outside security review. Section 15 lists both halves.
+
+**Who has reviewed the code?** Nobody outside the team. Seven automatic checks run on every
+change and all seven pass, but the platform does not let an author approve their own work and
+the automated reviewer ran out of its quota. Machine checks are not review, and we will not
+call them that.
+
+**Can a shopper really use it without an account?** Yes. Four services need no sign-up: read
+what must be printed on a packet, report a product, follow that report, and check whether a
+report is genuine. Following a report needs both the reference and the contact detail given, so
+a found piece of paper is not enough to read somebody else's complaint.
+
+**What stops this being used to harass a trader?** Every legal conclusion is recorded against a
+named officer. Maanak decides nothing by itself, cannot issue a penalty, and says so on every
+page and every report.
+
+**Is any of the data real?** No. Everything in the demonstration is marked as sample data and
+refers to no real product, premises, brand or person.
+
+**Why should we believe the numbers in this report?** Because each one can be reproduced. Every
+figure here was read off a run, and section 12 gives the command that produces it. The code is
+public.
+
+---
+
+## 26. How we worked
 
 Every single change went the same way, with no exceptions:
 
@@ -909,7 +1180,7 @@ We say so rather than implying a review happened.
 
 ---
 
-## 21. How to run it yourself
+## 27. How to run it yourself
 
 You need Docker. Nothing else. No Python, no database, nothing installed on your computer.
 
@@ -963,7 +1234,7 @@ the reasoning behind them.
 
 ---
 
-## 22. Words used in this report
+## 28. Words used in this report
 
 | Word | What it means here |
 | --- | --- |
@@ -990,7 +1261,7 @@ the reasoning behind them.
 
 ---
 
-## 23. Who built it
+## 29. Who built it
 
 devpilotX and catburglarX.
 
